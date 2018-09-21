@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="classRefTeacher">	
+   <!-- 得到其他的班级，过滤当前班级-->
+	<select id="getClass" parameterType="java.lang.String" resultType="Map">
+		<![CDATA[
+		          select * from &{framework.tmis.table.prefix['platform']}tbl_Class_Info 
+		]]> 
+		<where>
+		  <if test="ids.size>0">
+		  id not in
+		     <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+		  </if>
+		</where>
+	</select>
+	
+	
+	 <!-- 得到其他的班级，过滤当前班级-->
+	<select id="getClassByIdAndSchoolCode" parameterType="java.lang.String" resultType="Map">
+		<![CDATA[
+		select 
+		tci.id,tci.Class_Name,tci.School_Code,trcg.Grade_Id,tgi.Grade_Name
+					    from  &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci 
+						inner join  &{framework.tmis.table.prefix['platform']}tbl_ref_Class_Grade trcg
+						on tci.id=trcg.Class_Id inner join &{framework.tmis.table.prefix['platform']}tbl_Grade_Info tgi 
+                        on trcg.Grade_Id=tgi.id
+		]]> 
+		<where>
+		  <if test="ids.size>0">
+		  tci.id not in
+		     <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+		  </if>
+		  <if test="schoolCode!='' and schoolCode!=null">
+		    AND  tci.School_Code=#{schoolCode}
+		  </if>
+		</where>
+	</select>
+	
+	
+	
+	<!-- 得到当前教师所在的班级-->
+	<!--  <select id="getClassByTeaId" parameterType="java.lang.String" resultType="Map">
+	     <![CDATA[
+	               select rts.Class_Id,tsi.Class_Name,trcg.Grade_Id,tgi.Grade_Name from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class rts 
+                    left join &{framework.tmis.table.prefix['platform']}tbl_Class_Info  tsi
+                    on rts.Class_Id=tsi.id inner join &{framework.tmis.table.prefix['platform']}tbl_ref_Class_Grade trcg
+                    on trcg.Class_Id=tsi.id inner JOIN &{framework.tmis.table.prefix['platform']}tbl_Grade_Info tgi on tgi.id=trcg.Grade_Id
+                    where  
+                    Teacher_Id =#{id}
+         ]]>
+	</select>-->
+	
+	<select id="getClassByTeaId" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	               select Grade_Id,Class_Id from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class
+				   where Teacher_Id = #{id}
+         ]]>
+	</select>
+	
+	<select id="getClassByTeaIdAndYear" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	               select Grade_Id,Class_Id from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class
+				   where Teacher_Id = #{id} and Current_Year = #{currentYear}
+         ]]>
+	</select>
+	
+	
+	<!-- 根据教师id和学校code得到当前教师所在的班级-->
+	<select id="getClassByTeaIdAndSchoolCode" parameterType="java.lang.String" resultType="Map">
+	     <![CDATA[
+	     select rts.Class_Id,tsi.School_Code,tsi.Class_Name,trcg.Grade_Id,tgi.Grade_Name from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class rts 
+                    left join  &{framework.tmis.table.prefix['platform']}tbl_Class_Info  tsi
+                    on rts.Class_Id=tsi.id inner join  &{framework.tmis.table.prefix['platform']}tbl_ref_Class_Grade trcg
+                    on trcg.Class_Id=tsi.id inner JOIN  &{framework.tmis.table.prefix['platform']}tbl_Grade_Info tgi on tgi.id=trcg.Grade_Id
+                    where   
+                    Teacher_Id =#{id} and School_Code=#{schoolCode}
+         ]]>
+	</select>
+	
+	
+	<!-- 删除当前老师所在的班级 -->
+	<delete id="deleteClassByTeaId" parameterType="Map">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class 
+    ]]>
+     <where>
+    and 1=1
+    <if test="teacherIds.size>0">
+		    and Teacher_Id  in
+		     <foreach collection="teacherIds" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+	 </if>
+	  AND Current_Year = #{currentYear}
+    </where>
+	</delete>
+	<!-- 添加班级 -->
+	<insert id="addClassForTeacher" parameterType="Map">
+	 <selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+		    <![CDATA[
+		        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class
+				(Id,Teacher_Id,Class_Id,Grade_Id,Current_Year)
+				VALUES(#{id},#{teacherId},#{class},#{grade},#{currentYear})  
+		    ]]>
+	</insert>
+	
+	<!-- 查询老师所带的班级 -->
+	<select id="selectClassByGrade" parameterType="Map" resultType="Map">
+		<![CDATA[
+		         select Grade_Id,Class_Id  from  &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class where Teacher_Id = #{teacherPk}
+				 and Current_Year = #{currentYear} and Grade_Id in
+		]]> 
+		     <foreach collection="gradeArr" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+   		     order by Class_Id
+	</select>
+</mapper>

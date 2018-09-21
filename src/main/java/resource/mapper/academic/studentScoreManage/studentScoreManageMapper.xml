@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="studentScoreManage">	
+
+	<select id="searchNumberAndCode" parameterType="Map" resultType="Map">
+    <![CDATA[
+        select trse.Exam_Number as examNumber,trse.Exam_Code  as examCode,tei.Exam_Name as examName,tei.Create_Time as createTime from 
+		&{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber trse  LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_Exam_Info tei on trse.Exam_Code = tei.Exam_Number
+	]]> 
+		WHERE trse.SFZJH = #{loginId}
+		<if test="schoolYear != null and schoolYear != ''">  
+  			 AND trse.School_Year = #{schoolYear}
+		</if>
+		<if test="term != null and term != ''">  
+  			 AND trse.Term =#{term}
+		</if>
+		<if test="examType != null and examType != ''">  
+   			 AND trse.Exam_Type= #{examType}
+		</if>
+    	ORDER BY tei.Create_Time
+	</select>
+	
+	<select id="searchScoreList" parameterType="Map" resultType="Map">
+    <![CDATA[
+       	SELECT ts.TotalScore as totalScore,ts.School_Year as schoolYear,ts.School_Type as schoolType,ts.Term as term,ts.Exam_Type as examType,ts.Course as course,ts.Class_Name as className from 
+		&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts
+	]]> 
+		where ts.Exam_Number in
+		<foreach collection="examNumberList" item="item"  open="(" separator="," close=")">
+			#{item}
+		</foreach>
+		AND ts.Course in
+		<foreach collection="course" item="item"  open="(" separator="," close=")">
+			#{item}
+		</foreach>
+		<!-- <if test="schoolYear != null and schoolYear != ''">  
+  			 AND ts.School_Year = #{schoolYear}
+		</if>
+		<if test="term != null and term != ''">  
+  			 AND ts.Term =#{term}
+		</if>
+		<if test="examType != null and examType != ''">  
+   			 AND ts.Exam_Type= #{examType}
+		</if> -->
+    
+	</select>
+	
+	<select id="searchExamInfoList" parameterType="Map" resultType="Map">
+    select  Course as course,Exam_Zf as zf,Exam_Yx as yx,Exam_Lh as lh,Exam_Jg as jg
+    <![CDATA[
+	from &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course trecc WHERE 
+	]]> 
+	trecc.Exam_Code in
+		<foreach collection="examCodeList" item="item"  open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	and Course in 
+		<foreach collection="course" item="item"  open="(" separator="," close=")">
+			#{item}
+		</foreach>
+    
+	</select>
+	
+	<select id="searchCourseScoreList" parameterType="Map" resultType="Double">
+    SELECT ts.TotalScore from 
+    <![CDATA[
+    &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber trse on ts.Exam_Number=trse.Exam_Number LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_Exam_Info tei on trse.Exam_Code=tei.Exam_Number
+    ]]> 
+	WHERE ts.Exam_Number in 
+	<foreach collection="examNumberList" item="item"  open="(" separator="," close=")">
+			#{item}
+	</foreach>
+	and ts.Course =#{course}
+	ORDER BY tei.Create_Time
+	</select>
+	
+</mapper>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="taskDealProcess">
+   <resultMap id="taskDealProcessMap" type="data.academic.taskCenter.entity.EntityTaskReceiverInfo">
+      <id property="id" column="id"/> 
+	  <result property="taskId" column="TASK_ID"/>
+	  <result property="receiverAccountType" column="RECEIVER_ACCOUNT_TYPE"/>
+	  <result property="receiverAccount" column="RECEIVER_ACCOUNT"/>
+	  <result property="receiver" column="RECEIVER"/>
+	  <result property="isRead" column="ISREAD"/>
+	  <result property="isDone" column="ISDONE"/>
+	  <result property="zynjId" column="ZYNJ_ID"/>
+	  <result property="fdyId" column="FDY_ID"/>
+    </resultMap>
+   
+	<!--新增-->
+	<insert id="insertTaskDealProcess" parameterType="data.academic.taskCenter.entity.EntityTaskReceiverInfo">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Task_Receiver
+        (id,TASK_ID,RECEIVER_ACCOUNT_TYPE,RECEIVER_ACCOUNT,RECEIVER,ISREAD,ISDONE,ZYNJ_ID,FDY_ID)
+		VALUES(NewID(),#{taskId},#{receiverAccountType},#{receiverAccount},#{receiver},#{isRead},#{isDone},#{zynjId},#{fdyId})
+    ]]>
+	</insert>
+	
+	<!--修改	-->
+	 <update id="updateTaskDealProcess" parameterType="data.academic.taskCenter.entity.EntityTaskReceiverInfo">
+	    <![CDATA[
+	   update &{framework.tmis.table.prefix['platform']}tbl_Task_Receiver
+		set TASK_ID=#{taskId},
+			RECEIVER_ACCOUNT_TYPE=#{receiverAccountType},
+			RECEIVER_ACCOUNT=#{receiverAccount},
+			RECEIVER=#{receiver},
+			IsRead=#{isRead},
+			IsDone=#{isDone}
+		    where id = #{id}
+	     ]]>
+	 </update>	
+	 
+	<!--根据任务信息Id 来删除任务信息-->
+	<delete id="deleteTaskDealProcessByTaskId">
+	<![CDATA[
+		    delete from &{framework.tmis.table.prefix['platform']}tbl_Task_Receiver  where TASK_ID in 
+		]]>
+	<foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+	 #{item}
+	</foreach>
+	</delete>
+	
+	<!-- 	根据学生专业年级id查询辅导员 -->
+	<select id="loadFdyByZyNjId" parameterType="Map" resultType="Map">
+		<![CDATA[
+			SELECT
+				f.*
+			FROM
+				&{framework.tmis.table.prefix['platform']}TBL_ZYNJ_MAPPER z
+			LEFT JOIN &{framework.tmis.table.prefix['platform']}TBL_FDY_MAPPER f ON z.ID = f.FKID
+			WHERE
+				f.STATUS = 1
+			AND CONVERT (CHAR, f.STARTDATE) <= #{date}
+			AND CONVERT (CHAR, ISNULL(f.ENDDATE,'99991231')) >= #{date}
+			AND z.ID = #{zyNjId}
+		]]>
+	</select>
+	
+</mapper>

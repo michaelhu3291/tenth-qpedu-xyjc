@@ -1,0 +1,1390 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="scoreSearch">
+	<!-- 分页查询成绩	-->
+	<!-- <select id="selectScoreSearchPaging" needPaging="true" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	 	 SELECT * from  &{framework.tmis.table.prefix['platform']}V_Score_Data
+	    ]]>
+	    
+	    <where>
+		  <if test="schoolYear!=null and schoolYear!=''">
+		    School_Year=#{schoolYear}
+		  </if>	
+		   <if test="term!=null and term!=''">
+		    AND  Term=#{term}
+		  </if>
+		   <if test="examType!=null and examType!=''">
+		   AND Exam_Type=#{examType}
+		  </if>
+		   <if test="schoolType!=null and schoolType!=''">
+		   AND School_Type=#{schoolType}
+		  </if>
+		  <if test="grade!=null and grade!=''">
+		   AND Grade_Id=#{grade}
+		  </if>
+		  <if test="school!=null and school.size>0">
+		   AND School_Code in 
+		  <foreach collection="school" index="index" item="item" open="(" separator="," close=")">
+		         #{item}
+		   </foreach>
+		         
+		  </if>
+		</where>
+	  
+	</select>-->
+	
+	<select id="selectScoreSearchPaging" needPaging="true" parameterType="Map" resultType="Map">
+		
+		     <![CDATA[
+		 	 select RANK() OVER(ORDER BY Total_Score DESC)AS orderClass,* 
+		 	 from &{framework.tmis.table.prefix['platform']}V_Course_Score
+			 where School_Code = #{schoolCode} and School_Year = #{schoolYear} and Course = #{course}
+			 and Term = #{term} and Exam_Type = #{examType}  
+		    ]]>
+		    
+		    <if test="stuCode != '' and stuCode != null">
+	   			and (XJFH = #{stuCode}
+	   		</if>
+	   		<if test="examNumber != '' and examNumber != null">
+	   			or Exam_Number = #{examNumber})
+	   		</if>
+		    
+		    <if test="list1 != null and list1.size > 0">
+		    	and Grade_Id in
+			    <foreach collection="list1" index="index" item="item" open="(" separator="," close=")">
+			    	#{item.grade}
+		    	</foreach>
+		    	
+			 	 and Class_Id in
+			    
+			    <foreach collection="list1" index="index" item="item" open="(" separator="," close=")">
+			    	#{item.class}
+		    	</foreach>
+	    	</if>
+	</select>
+	
+	<select id="selectExportScoreDataForTeacher"  parameterType="Map" resultType="Map">
+		
+		     <![CDATA[
+		 	 select RANK() OVER(ORDER BY Total_Score DESC)AS orderClass,* 
+		 	 from &{framework.tmis.table.prefix['platform']}V_Course_Score
+			 where School_Code = #{schoolCode} and School_Year = #{schoolYear} and Course = #{course}
+			 and Term = #{term} and Exam_Type = #{examType}  
+		    ]]>
+		    
+		    <if test="stuCode != '' and stuCode != null">
+	   			and (XJFH = #{stuCode}
+	   		</if>
+	   		<if test="examNumber != '' and examNumber != null">
+	   			or Exam_Number = #{examNumber})
+	   		</if>
+		    
+		    <if test="list1 != null and list1.size > 0">
+		    	and Grade_Id in
+			    <foreach collection="list1" index="index" item="item" open="(" separator="," close=")">
+			    	#{item.grade}
+		    	</foreach>
+		    	
+			 	 and Class_Id in
+			    
+			    <foreach collection="list1" index="index" item="item" open="(" separator="," close=")">
+			    	#{item.class}
+		    	</foreach>
+	    	</if>
+	    	<if test="idx != '' and so =='asc'" >
+   			order by ${idx} ASC
+   			</if>
+   			<if test="idx != '' and so =='desc'" >
+   			order by ${idx} DESC
+   			</if>
+   			<if test="idx == '' or so ==''">
+   			order by Grade_Id,Class_Id
+   			</if>
+	    	<!-- <![CDATA[
+		 	 	order by Grade_Id,Class_Id
+		    ]]> -->
+	</select>
+	
+	<!--查询所有的学校 -->
+	 
+	<select id="selectSchool" resultType="Map">
+	 <![CDATA[
+		          select School_Name,School_Code from &{framework.tmis.table.prefix['platform']}tbl_School_Info
+		          order by school_Name 
+		]]> 
+	</select>
+	
+	<!--查询所有的科目-->
+	 
+	<select id="selectCourse" resultType="Map">
+	 <![CDATA[
+		          select Course_Id,Course_Name from &{framework.tmis.table.prefix['platform']}tbl_Course_Info
+		          where Course_Id in (
+		           &{framework.tmis.course['courseIdXx']}
+		          ,&{framework.tmis.course['courseIdCz']}
+		          ,&{framework.tmis.course['courseIdGz']}
+		          )
+		          order by Course_Id
+		]]> 
+	</select>
+	
+	<!-- 通过科目id关联查询科目 -->
+	<select id="selectCoursesByCourseId"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	    
+	    	 select  Course_Id,Course_Name,Course_PId from &{framework.tmis.table.prefix['platform']}tbl_Course_Info
+		          where Course_PId =#{courseId}
+	    ]]>
+	</select>
+	
+	<!-- 查询关联年级所属的学校 -->
+	<select id="getSchoolsByGrade"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	    	select School_Code,School_Name,School_Short_Name,Brevity_Code from &{framework.tmis.table.prefix['platform']}tbl_School_Info
+			where 1=1
+	    ]]>
+	    <if test="schoolTypeList != null and schoolTypeList.size > 0">
+	    	and School_Type_Sequence in
+	    	 <foreach collection="schoolTypeList" index="index" item="item" open="(" separator="," close=")">
+		    	#{item}
+	    	 </foreach>
+	    </if>
+	    
+	   
+	</select>
+	
+	<!-- 教研员分页查询成绩-->
+	<select id="searchScoreForInstructor" needPaging="true" parameterType="Map" resultType="Map">
+		     <![CDATA[
+		 	 select TOP (100) PERCENT * from &{framework.tmis.table.prefix['platform']}V_Score_Data
+			 where School_Year = #{schoolYear}
+			 and Term = #{term} and Exam_Type = #{examType} and Grade_Id = #{grade} 
+		    ]]>
+		    <if test="stuCode != '' and stuCode != null">
+	   			and (XJFH = #{stuCode}
+	   		</if>
+	   		<if test="examNumber != '' and examNumber != null">
+	   			or Exam_Number = #{examNumber})
+	   		</if>
+		    <if test="school != null and school.size > 0">
+		    	and School_Code in
+		    	 <foreach collection="school" index="index" item="item" open="(" separator="," close=")">
+		    		#{item}
+	    		</foreach>
+		    </if>
+		    order by School_Code ASC,Grade_Id ASC,Class_Id ASC,Total_Score DESC
+	</select>
+	
+	<!-- 教研员和超级管理员导出excel成绩-->
+	<select id="selectExportScoreDataForInstructor"  parameterType="Map" resultType="Map">
+		     <![CDATA[
+		 	 select TOP (100) PERCENT * from &{framework.tmis.table.prefix['platform']}V_Score_Data
+			 where School_Year = #{schoolYear}
+			 and Term = #{term} and Exam_Type = #{examType} 
+		    ]]>
+		     <if test="grade != null and grade != ''">
+		    	and Grade_Id = #{grade}
+		    </if>
+		    <if test="stuCode != '' and stuCode != null">
+	   			and (XJFH = #{stuCode}
+	   		</if>
+	   		<if test="examNumber != '' and examNumber != null">
+	   			or Exam_Number = #{examNumber})
+	   		</if>
+		    <if test="school != null and school.size > 0">
+		    	and School_Code in
+		    	 <foreach collection="school" index="index" item="item" open="(" separator="," close=")">
+		    		#{item}
+	    		</foreach>
+		    </if>
+		    order by School_Code ASC,Grade_Id ASC,Class_Id ASC,Total_Score DESC
+	</select>
+	
+	<!-- 查询参加考试的区级的年级总人数 -->
+	<select id="getTotalDistrict" parameterType="Map" resultType="java.lang.String">
+       <![CDATA[
+            {call &{framework.tmis.table.prefix['platform']}sp_total_district(#{examType},#{grade},#{schoolYear},#{schoolType},#{term})}
+	   ]]>
+	</select>
+	
+	<!-- 查询参加考试的区级的排名 -->
+	<select id="getOrderDistrict" parameterType="Map" resultType="java.lang.String">
+       <![CDATA[
+            {call &{framework.tmis.table.prefix['platform']}sp_rank_district(#{examNumber},#{examType},#{grade},#{schoolYear},#{schoolType},#{term})}
+	   ]]>
+	</select>
+	
+	<!-- 查询参加考试的学校的年级的排名 -->
+	<select id="getOrderGrade" parameterType="Map" resultType="java.lang.String">
+       <![CDATA[
+            {call &{framework.tmis.table.prefix['platform']}sp_rank_grade_admin(#{examNumber},#{examType},#{grade},#{schoolCode},#{schoolYear},#{schoolType},#{term})}
+	   ]]>
+	</select>
+	
+		
+	<!-- 学校管理员-查询参加考试的学校的年级总人数 -->
+	<select id="getTotalSchool" parameterType="Map" resultType="java.lang.String">
+	   <![CDATA[
+            {call &{framework.tmis.table.prefix['platform']}sp_total_school_admin(#{examType},#{grade},#{schoolCode},#{schoolYear},#{schoolType},#{term})}
+	   ]]>
+	</select>
+	
+	
+	<!-- 老师-查询参加考试的年级总人数 -->
+	<select id="getTotalGrade" parameterType="Map" resultType="java.lang.String" statementType="CALLABLE">
+	    <![CDATA[
+	         {call &{framework.tmis.table.prefix['platform']}sp_total_grade_tec(#{course},#{examType},#{grade},#{schoolCode},#{schoolYear},#{term})}
+	    ]]>
+	</select>
+		
+		
+	<!-- 学校管理员-查询参加考试的班级总人数 -->
+	<select id="getTotalClass" parameterType="Map" resultType="java.lang.String" statementType="CALLABLE">
+	   <![CDATA[
+            {call &{framework.tmis.table.prefix['platform']}sp_total_class_admin(#{classId},#{examType},#{grade},#{schoolCode},#{schoolYear},#{schoolType},#{term})}
+	   ]]>
+	</select>
+	
+	
+	<!-- 老师-查询参加考试的班级总人数 -->
+	<select id="getTotalClassTec" parameterType="Map" resultType="java.lang.String" statementType="CALLABLE">
+	   <![CDATA[
+	        {call &{framework.tmis.table.prefix['platform']}sp_total_class_tec(#{classId},#{course},#{examType},#{grade},#{schoolCode},#{schoolYear},#{term})}
+	   ]]>
+	</select>
+	
+	
+	<!-- 学校管理员-查询参加考试的班级排名 -->
+	<select id="getOrderClass" parameterType="Map" resultType="java.lang.String" statementType="CALLABLE">
+	   <![CDATA[
+            {call &{framework.tmis.table.prefix['platform']}sp_rank_class_admin(#{classId},#{examNumber},#{examType},#{grade},#{schoolCode},#{schoolYear},#{schoolType},#{term})}
+	   ]]>
+	</select>
+	
+	
+	<!-- 老师-查询参加考试的年级排名 -->
+	<select id="getOrderGradeTec" parameterType="Map" resultType="java.lang.String" statementType="CALLABLE">
+	   <![CDATA[
+            {call &{framework.tmis.table.prefix['platform']}sp_rank_grade_tec(#{course},#{examNumber},#{examType},#{grade},#{schoolCode},#{schoolYear},#{term})}
+	   ]]>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的科目总人数 -->
+	<select id="getTotalCourse" parameterType="Map" resultType="java.lang.String">
+	   <![CDATA[
+            {call &{framework.tmis.table.prefix['platform']}sp_total_course(#{course},#{examType},#{grade},#{schoolType},#{schoolYear},#{term})}
+	   ]]>
+	</select>
+	
+	
+	
+	<!-- 青浦超级管理员查询成绩 (老师，教导员，教研员，青浦超级管理员公用的sql)-->
+	<select id="searchScoreForqpAdmin" needPaging="true" parameterType="Map" resultType="Map">
+		<if test="schoolType == 'xx'">
+			<![CDATA[
+			 select TOP (100) PERCENT a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code 
+		    ]]>
+		
+		</if>
+		<if test="schoolType == 'cz'">
+			<![CDATA[
+			 select TOP (100) PERCENT a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code
+		    ]]>
+		
+		</if>
+		<if test="schoolType == 'gz'">
+			<![CDATA[
+			 select TOP (100) PERCENT a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code
+		    ]]>
+		</if>
+	    <if test="grade != null and grade != ''">
+	    	and a.Grade_Id = #{grade}
+	    </if>
+	    <if test="schoolCode != null and schoolCode != ''">
+	   		<!--  and a.School_Code = #{schoolCode} -->
+	   	 	 <if test="schoolList.size>0">
+	    			and a.School_Code in 
+	    			 <foreach collection="schoolList" index="index" item="item" open="(" separator="," close=")">
+	    				#{item}
+    				</foreach>
+	   		 </if>  
+	    </if>
+	    <if test="examCode != null and examCode != ''">
+	    	and a.Exam_Code = #{examCode}
+	    </if>
+	    <if test="stuCode != '' and stuCode != null">
+   			and (a.XJFH = #{stuCode}
+   		</if>
+   		<if test="examNumber != '' and examNumber != null">
+   			or a.Exam_Number = #{examNumber})
+   		</if>
+	    <if test="school != null and school.size > 0">
+	    	and a.School_Code in
+	    	 <foreach collection="school" index="index" item="item" open="(" separator="," close=")">
+	    		#{item}
+    		</foreach>
+	    </if>
+	    <if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,a.Class_Id) &gt;= #{minClassNo}
+			   AND convert(int,a.Class_Id) &lt;= #{maxClassNo}
+	    </if>
+	    order by a.School_Code ASC,a.Grade_Id ASC,a.Class_Id ASC,a.Total_Score DESC
+	</select>
+
+
+  <!-- 青浦超级管理员查询成绩 (老师，教导员，教研员，青浦超级管理员公用的sql)改-->
+  <sql id="rank_xx">
+    SELECT
+    RANK() OVER(ORDER BY yw DESC) AS rank_yw
+    ,RANK() OVER(ORDER BY sx DESC) AS rank_sx
+    ,RANK() OVER(ORDER BY yy DESC) AS rank_yy
+    ,RANK() OVER(ORDER BY zr DESC) AS rank_zr
+    ,RANK() OVER(ORDER BY sxzz DESC) AS rank_sxzz
+    ,RANK() OVER(ORDER BY xxkj DESC) AS rank_xxkj
+    ,RANK() OVER(ORDER BY ms DESC) AS rank_ms
+    ,RANK() OVER(ORDER BY ty DESC) AS rank_ty
+    ,RANK() OVER(ORDER BY yyue DESC) AS rank_yyue
+    ,RANK() OVER(ORDER BY yjxkc DESC) AS rank_yjxkc
+    ,RANK() OVER(ORDER BY tzxkc DESC) AS rank_tzxkc
+    ,RANK() OVER(ORDER BY total_score DESC) AS rank_total
+    ,*
+    FROM qingpu_quality.dbo.V_Score_Data_Xx a
+  </sql>
+  <sql id="rank_cz">
+    SELECT
+    RANK() OVER(ORDER BY yw DESC) AS rank_yw
+    ,RANK() OVER(ORDER BY sx DESC) AS rank_sx
+    ,RANK() OVER(ORDER BY yy DESC) AS rank_yy
+    ,RANK() OVER(ORDER BY wl DESC) AS rank_wl
+    ,RANK() OVER(ORDER BY hx DESC) AS rank_hx
+    ,RANK() OVER(ORDER BY sxzz DESC) AS rank_sxzz
+    ,RANK() OVER(ORDER BY ls DESC) AS rank_ls
+    ,RANK() OVER(ORDER BY kx DESC) AS rank_kx
+    ,RANK() OVER(ORDER BY xxkj DESC) AS rank_xxkj
+    ,RANK() OVER(ORDER BY ms DESC) AS rank_ms
+    ,RANK() OVER(ORDER BY ty DESC) AS rank_ty
+    ,RANK() OVER(ORDER BY yyue DESC) AS rank_yyue
+    ,RANK() OVER(ORDER BY yjxkc DESC) AS rank_yjxkc
+    ,RANK() OVER(ORDER BY tzxkc DESC) AS rank_tzxkc
+    ,RANK() OVER(ORDER BY total_score DESC) AS rank_total
+    ,*
+    FROM qingpu_quality.dbo.V_Score_Data_Cz a
+  </sql>
+  <sql id="rank_gz">
+    SELECT
+    RANK() OVER(ORDER BY yw DESC) AS rank_yw
+    ,RANK() OVER(ORDER BY sx DESC) AS rank_sx
+    ,RANK() OVER(ORDER BY wl DESC) AS rank_wl
+    ,RANK() OVER(ORDER BY hx DESC) AS rank_hx
+    ,RANK() OVER(ORDER BY sxzz DESC) AS rank_sxzz
+    ,RANK() OVER(ORDER BY ls DESC) AS rank_ls
+    ,RANK() OVER(ORDER BY dl DESC) AS rank_dl
+    ,RANK() OVER(ORDER BY xxkj DESC) AS rank_xxkj
+    ,RANK() OVER(ORDER BY ms DESC) AS rank_ms
+    ,RANK() OVER(ORDER BY sw DESC) AS rank_sw
+    ,RANK() OVER(ORDER BY ty DESC) AS rank_ty
+    ,RANK() OVER(ORDER BY yyue DESC) AS rank_yyue
+    ,RANK() OVER(ORDER BY njyy DESC) AS rank_njyy
+    ,RANK() OVER(ORDER BY yjxkc DESC) AS rank_yjxkc
+    ,RANK() OVER(ORDER BY tzxkc DESC) AS rank_tzxkc
+    ,RANK() OVER(ORDER BY xsjyy DESC) AS rank_xsjyy
+    ,RANK() OVER(ORDER BY total_score DESC) AS rank_total
+    ,*
+    FROM qingpu_quality.dbo.V_Score_Data_Gz a
+  </sql>
+  <sql id="rankWhere_qj">
+    WHERE a.Exam_Type = #{examType}
+    AND a.Grade_Id = #{grade}
+    AND a.School_Year = #{schoolYear}
+    AND a.Term = #{term}
+  </sql>
+
+  <sql id="searchScoreForqpAdmin2Where">
+    where 1=1
+    <if test="grade != null and grade != ''">
+      and a.Grade_Id = #{grade}
+    </if>
+    <if test="schoolCode != null and schoolCode != ''">
+      and a.School_Code = #{schoolCode}
+    </if>
+    <if test="examCode != null and examCode != ''">
+      and a.Exam_Code = #{examCode}
+    </if>
+    <if test="stuCode != '' and stuCode != null">
+      and (a.XJFH = #{stuCode} or a.Exam_Number = #{stuCode})
+    </if>
+    <if test="school != null and school.size > 0">
+      and a.School_Code in
+      <foreach collection="school" index="index" item="item" open="(" separator="," close=")">
+        #{item}
+      </foreach>
+    </if>
+  </sql>
+  <sql id="searchScoreForqpAdmin2Where2">
+    WHERE Exam_Type = #{examType}
+    AND Grade_Id = #{grade}
+    AND School_Year = #{schoolYear}
+    AND School_Code = a.School_Code
+    AND Term = #{term}
+  </sql>
+
+  <!-- 取区级名次,各科名次-->
+  <select id="searchRank_qj" needPaging="false" parameterType="Map" resultType="Map">
+    <if test="schoolType == 'xx'">
+      <include refid="rank_xx"/>
+      <include refid="rankWhere_qj"/>
+    </if>
+    <if test="schoolType == 'cz'">
+      <include refid="rank_cz"/>
+      <include refid="rankWhere_qj"/>
+    </if>
+    <if test="schoolType == 'gz'">
+      <include refid="rank_gz"/>
+      <include refid="rankWhere_qj"/>
+    </if>
+  </select>
+  <!-- 取年级名次-->
+  <select id="searchRank_nj" needPaging="false" parameterType="Map" resultType="Map">
+    <if test="schoolType == 'xx'">
+      select ROW_NUMBER() OVER (ORDER BY Total_Score DESC) AS seq,
+      RANK()OVER (ORDER BY Total_Score DESC) AS seq1,
+      DENSE_RANK() OVER (ORDER BY Total_Score DESC) AS rank_nj,
+      XJFH
+      FROM qingpu_quality.dbo.V_Score_Data_Xx a
+      <include refid="rankWhere_qj"/>
+    </if>
+    <if test="schoolType == 'cz'">
+      select ROW_NUMBER() OVER (ORDER BY Total_Score DESC) AS seq,
+      RANK()OVER (ORDER BY Total_Score DESC) AS seq1,
+      DENSE_RANK() OVER (ORDER BY Total_Score DESC) AS rank_nj,
+      XJFH
+      FROM qingpu_quality.dbo.V_Score_Data_Cz a
+      <include refid="rankWhere_qj"/>
+    </if>
+    <if test="schoolType == 'gz'">
+      select ROW_NUMBER() OVER (ORDER BY Total_Score DESC) AS seq,
+      RANK()OVER (ORDER BY Total_Score DESC) AS seq1,
+      DENSE_RANK() OVER (ORDER BY Total_Score DESC) AS rank_nj,
+      XJFH
+      FROM qingpu_quality.dbo.V_Score_Data_Gz a
+      <include refid="rankWhere_qj"/>
+    </if>
+  </select>
+  <select id="searchScoreForqpAdmin2" needPaging="true" parameterType="Map" resultType="Map">
+    <if test="schoolType == 'xx'">
+			 select  a.*,RANK() OVER(ORDER BY Total_Score DESC) AS orderClass
+      ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Xx <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+      from qingpu_quality.dbo.V_Score_Data_Xx a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+    <if test="schoolType == 'cz'">
+			 select   a.*
+			 ,RANK() OVER (ORDER BY Total_Score desc) AS orderClass
+			 ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Cz <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+			 from qingpu_quality.dbo.V_Score_Data_Cz a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+    <if test="schoolType == 'gz'">
+			 select   a.*
+      ,RANK() OVER(ORDER BY Total_Score DESC) AS orderClass
+      ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Gz <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+      from qingpu_quality.dbo.V_Score_Data_Gz a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+  </select>
+	<select id="selectAllStudentsScoreForSchoolAdmin"  parameterType="Map" resultType="Map">
+    <if test="schoolType == 'xx'">
+			 select  a.*,RANK() OVER(ORDER BY Total_Score DESC) AS orderClass
+      ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Xx <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+      from qingpu_quality.dbo.V_Score_Data_Xx a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+    <if test="schoolType == 'cz'">
+			 select   a.*
+			 ,RANK() OVER (ORDER BY Total_Score desc) AS orderClass
+			 ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Cz <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+			 from qingpu_quality.dbo.V_Score_Data_Cz a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+    <if test="schoolType == 'gz'">
+			 select   a.*
+      ,RANK() OVER(ORDER BY Total_Score DESC) AS orderClass
+      ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Gz <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+      from qingpu_quality.dbo.V_Score_Data_Gz a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+       <if test="idx != '' and so =='asc'" >
+   			order by a.${idx} ASC
+   		</if>
+   		<if test="idx != '' and so =='desc'" >
+   			order by a.${idx} DESC
+   		</if>
+   		<if test="idx == '' or so ==''">
+   			order by a.School_Code ASC,a.Grade_Id ASC,a.Class_Id ASC,a.Total_Score DESC
+   		</if>
+  </select>
+	
+	<!-- 青浦超级管理员查询成绩 (老师，教导员，教研员，青浦超级管理员公用的sql)-->
+	<select id="searchScoreForqpAdminPage" needPaging="true" parameterType="Map" resultType="Map">
+		<if test="schoolType == 'xx'">
+			<![CDATA[
+			 select TOP (100) PERCENT RANK() OVER(ORDER BY Total_Score DESC)AS orderDistrict,a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code 
+		    ]]>
+		
+		</if>
+		<if test="schoolType == 'cz'">
+			<![CDATA[
+			 select TOP (100) PERCENT RANK() OVER(ORDER BY Total_Score DESC)AS orderDistrict,a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code 
+		    ]]>
+		
+		</if>
+		<if test="schoolType == 'gz'">
+			<![CDATA[
+			 select TOP (100) PERCENT RANK() OVER(ORDER BY Total_Score DESC)AS orderDistrict,a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code 
+		    ]]>
+		</if>
+	    <if test="grade != null and grade != ''">
+	    	and a.Grade_Id = #{grade}
+	    </if>
+	    <if test="schoolCode != null and schoolCode != ''">
+	    	and a.School_Code = #{schoolCode}
+	    </if>
+	    <if test="examCode != null and examCode != ''">
+	    	and a.Exam_Code = #{examCode}
+	    </if>
+	    <if test="stuCode != '' and stuCode != null">
+   			and (a.XJFH = #{stuCode}
+   		</if>
+   		<if test="examNumber != '' and examNumber != null">
+   			or a.Exam_Number = #{examNumber})
+   		</if>
+	    <if test="school != null and school.size > 0">
+	    	and a.School_Code in
+	    	 <foreach collection="school" index="index" item="item" open="(" separator="," close=")">
+	    		#{item}
+    		</foreach>
+	    </if>
+	    <if test="idx != '' and so =='asc'" >
+   			order by a.${idx} ASC
+   		</if>
+   		<if test="idx != '' and so =='desc'" >
+   			order by a.${idx} DESC
+   		</if>
+   		<if test="idx == '' or so ==''">
+   			order by a.School_Code ASC,a.Grade_Id ASC,a.Class_Id ASC,a.Total_Score DESC
+   		</if>
+	    <!-- order by School_Code ASC,Grade_Id ASC,Class_Id ASC,Total_Score DESC -->
+	</select>
+	
+	
+	<select id="searchScoreForqpAdminPage2" needPaging="true" parameterType="Map" resultType="Map">
+    <if test="schoolType == 'xx'">
+			 select  a.*,RANK() OVER(ORDER BY Total_Score DESC) AS orderClass
+      ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Xx <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+      from qingpu_quality.dbo.V_Score_Data_Xx a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+    <if test="schoolType == 'cz'">
+			 select   a.*
+			 ,RANK() OVER (ORDER BY Total_Score desc) AS orderClass
+			 ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Cz <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+			 from qingpu_quality.dbo.V_Score_Data_Cz a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+    <if test="schoolType == 'gz'">
+			 select   a.*
+      ,RANK() OVER(ORDER BY Total_Score DESC) AS orderClass
+      ,(SELECT count(1) AS totalSchool FROM  qingpu_quality.dbo.V_Score_Data_Gz <include refid="searchScoreForqpAdmin2Where2" /> ) AS totalSchool
+      from qingpu_quality.dbo.V_Score_Data_Gz a
+      <include refid="searchScoreForqpAdmin2Where" />
+    </if>
+ 		<if test="idx != '' and so =='asc'" >
+   			order by a.${idx} ASC
+   		</if>
+   		<if test="idx != '' and so =='desc'" >
+   			order by a.${idx} DESC
+   		</if>
+   		<if test="idx == '' or so ==''">
+   			order by a.School_Code ASC,a.Grade_Id ASC,a.Class_Id ASC,a.Total_Score DESC
+   		</if>
+    <!--order by a.School_Code ASC,a.Grade_Id ASC,a.Class_Id ASC,a.Total_Score DESC-->
+  </select>
+	
+	
+	<!-- 学校老师查询成绩打印用 (老师，教导员，教研员，青浦超级管理员公用的sql)-->
+	<select id="searchScoreForTeacherPage" needPaging="true" parameterType="Map" resultType="Map">
+		<![CDATA[
+		 	 select RANK() OVER(ORDER BY Total_Score DESC)AS orderDistrict,* 
+		 	 from &{framework.tmis.table.prefix['platform']}V_Course_Score
+			 where School_Code = #{schoolCode} and School_Year = #{schoolYear} and Course = #{course}
+			 and Term = #{term} and Exam_Type = #{examType}  
+		    ]]>
+		    
+		    <if test="stuCode != '' and stuCode != null">
+	   			and (XJFH = #{stuCode}
+	   		</if>
+	   		<if test="examNumber != '' and examNumber != null">
+	   			or Exam_Number = #{examNumber})
+	   		</if>
+		    
+		    <if test="list1 != null and list1.size > 0">
+		    	and Grade_Id in
+			    <foreach collection="list1" index="index" item="item" open="(" separator="," close=")">
+			    	#{item.grade}
+		    	</foreach>
+		    	
+			 	 and Class_Id in
+			    
+			    <foreach collection="list1" index="index" item="item" open="(" separator="," close=")">
+			    	#{item.class}
+		    	</foreach>
+	    	</if>
+	    	<if test="idx != '' and so =='asc'" >
+   			order by ${idx} ASC
+   			</if>
+   			<if test="idx != '' and so =='desc'" >
+   			order by ${idx} DESC
+   			</if>
+   			<if test="idx == '' or so ==''">
+   			order by Grade_Id,Class_Id
+   			</if>
+	    	<!-- <![CDATA[
+		 	 	order by Grade_Id,Class_Id
+		    ]]> -->
+	</select>
+	
+	<!-- 青浦教育局加载所有学校-->
+	<select id="getAllSchoolsByForqpAdmin"  resultType="Map">
+		     <![CDATA[
+		 		select School_Code,School_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info where School_Type_Sequence in('0','1','2','3','4','5')
+		 		order by School_Type_Sequence ASC
+		    ]]>
+	</select>
+	
+	<!-- 通过年级来查询考试科目列表-->
+	<select id="selectCourseByGrade"  parameterType="Map" resultType="Map">
+		     <![CDATA[
+		 	 select Course from &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course
+			 where Exam_Code IN (select DISTINCT Exam_Number from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info where School_Year=#{schoolYear} AND Grade_Code=#{grade}
+			 AND Term=#{term} AND Exam_Type=#{examType} AND School_Code=#{schoolCode} AND Introduced_State='1')
+		    ]]>
+		    order by SortNumber ASC
+	</select>
+	
+	<!-- 通过年级来查询考试名称-->
+	<select id="selectExamNameByGrade"  parameterType="Map" resultType="Map">
+		     <![CDATA[
+		 	 select Exam_Name,Exam_Number from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info where School_Year=#{schoolYear} AND Grade_Code=#{grade}
+			 AND Term=#{term} AND Exam_Type=#{examType} AND Introduced_State='1' AND (School_Code = #{schoolCode} OR School_Code='3026')
+		    ]]>
+	</select>
+	
+	<!-- 通过考试编号查询科目列表-->
+	<select id="selectCourseByExamNumber"  parameterType="Map" resultType="Map">
+		     <![CDATA[
+		 	 select Course from &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course where Exam_Code = #{examCode}
+		    ]]>
+		    order by SortNumber ASC
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     语文    科目排名 -->
+	<select id="getOrderCourseByYw" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yw DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yw <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yw DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yw <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yw DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yw <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     数学    科目排名 -->
+	<select id="getOrderCourseBySx" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY sx DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND sx <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY sx DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND sx <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY sx DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND sx <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	<!-- 区级管理员-查询参加考试的学校的     外语    科目排名 -->
+	<select id="getOrderCourseByYy" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yy DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yy <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yy DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yy <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	<!-- 区级管理员-查询参加考试的学校的     物理    科目排名 -->
+	<select id="getOrderCourseByWl" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY wl DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND wl <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY wl DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND wl <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	<!-- 区级管理员-查询参加考试的学校的     化学    科目排名 -->
+	<select id="getOrderCourseByHx" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY hx DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND hx <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY hx DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND hx <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	<!-- 区级管理员-查询参加考试的学校的     历史    科目排名 -->
+	<select id="getOrderCourseByLs" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY ls DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND ls <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY ls DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND ls <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     科学    科目排名 -->
+	<select id="getOrderCourseByKx" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY kx DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND kx <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     美术    科目排名 -->
+	<select id="getOrderCourseByMs" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY ms DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND ms <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY ms DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND ms <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY ms DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND ms <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     体育    科目排名 -->
+	<select id="getOrderCourseByTy" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY ty DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND ty <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY ty DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND ty <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY ty DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND ty <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     音乐    科目排名 -->
+	<select id="getOrderCourseByYyue" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yyue DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yyue <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yyue DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yyue <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yyue DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yyue <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     生物    科目排名 -->
+	<select id="getOrderCourseBySw" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY sw DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND sw <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     自然    科目排名 -->
+	<select id="getOrderCourseZr" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY zr DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND zr <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的     思想政治    科目排名 -->
+	<select id="getOrderCourseBySxzz" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY sxzz DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND sxzz <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY sxzz DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND sxzz <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY sxzz DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND sxzz <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的    信息科技    科目排名 -->
+	<select id="getOrderCourseByXxkj" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY xxkj DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND xxkj <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY xxkj DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND xxkj <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY xxkj DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND xxkj <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	
+	<!-- 区级管理员-查询参加考试的学校的    研究型课程    科目排名 -->
+	<select id="getOrderCourseByYjxkc" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yjxkc DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yjxkc <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yjxkc DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yjxkc <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY yjxkc DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND yjxkc <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	<!-- 区级管理员-查询参加考试的学校的    拓展型课程    科目排名 -->
+	<select id="getOrderCourseByTzxkc" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'xx'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY tzxkc DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND tzxkc <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'cz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY tzxkc DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND tzxkc <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY tzxkc DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND tzxkc <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	<!-- 区级管理员-查询参加考试的学校的    牛津英语    科目排名 -->
+	<select id="getOrderCourseByNjyy" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY njyy DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND njyy <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+	<!-- 区级管理员-查询参加考试的学校的    高中新世纪英语    科目排名 -->
+	<select id="getOrderCourseByXsjyy" parameterType="java.util.Map" resultType="java.lang.String">
+	   <if test="schoolType == 'gz'">
+	   <![CDATA[
+           SELECT A.orderCourse
+           FROM(
+              SELECT RANK() OVER(ORDER BY xsjyy DESC)AS orderCourse,*
+              FROM &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz
+              WHERE Exam_Type = #{examType}
+              AND Grade_Id = #{grade}
+              AND School_Year = #{schoolYear}
+              AND Term = #{term}
+              AND xsjyy <> '0'
+              )AS A
+           WHERE Exam_Number = #{examNumber}
+	   ]]>
+	   </if>
+	</select>
+	
+</mapper>

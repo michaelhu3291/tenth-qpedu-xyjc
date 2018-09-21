@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="historyScore">
+
+	<!--分页查询成绩 -->
+	<select id="selectScorePagging" needPaging="true" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select TOP (100) PERCENT * from &{framework.tmis.table.prefix['platform']}V_Course_Score
+	       where School_Year = #{schoolYear} and Term = #{term} and Exam_Type = #{examType}
+	    ]]>
+	    	<if test="grade != null and grade != ''">  
+	           AND Grade_Id = #{grade}
+	       	</if>
+	       	<if test="course != null and course != ''">  
+	           AND Course = #{course}
+	       	</if>
+	       	<if test="schoolCode != null and schoolCode != ''">  
+	           AND School_Code = #{schoolCode}
+	       	</if>
+	       	<if test="stuCode != '' and stuCode != null">
+	   			and (XJFH = #{stuCode}
+	   		</if>
+	   		<if test="examNumber != '' and examNumber != null">
+	   			or Exam_Number = #{examNumber})
+	   		</if>
+	       	<if test="classList != null and classList.size > 0">
+	       		AND Grade_Id in
+	       		 <foreach collection="classList" index="index" item="item" open="(" separator="," close=")">     
+	  				#{item.grade}
+	   			</foreach>
+	   			AND Class_Id in
+	       		 <foreach collection="classList" index="index" item="item" open="(" separator="," close=")">     
+	  				#{item.class}
+	   			</foreach>
+	       	</if>
+	       	order by School_Code ASC,Grade_Id ASC,Class_Id ASC,Total_Score DESC
+	</select>
+	
+	<!--青浦超级管理员和教研员导出历史成绩excel -->
+	<select id="selectExportHistoryScoreForqpAdminAndInstrutor" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select TOP (100) PERCENT * from &{framework.tmis.table.prefix['platform']}V_Course_Score
+	       where School_Year = #{schoolYear} and Term = #{term} and Exam_Type = #{examType}
+	    ]]>
+	    	<if test="grade != null and grade != ''">  
+	           AND Grade_Id = #{grade}
+	       	</if>
+	       	<if test="course != null and course != ''">  
+	           AND Course = #{course}
+	       	</if>
+	       	<if test="stuCode != '' and stuCode != null">
+	   			and (XJFH = #{stuCode}
+	   		</if>
+	   		<if test="examNumber != '' and examNumber != null">
+	   			or Exam_Number = #{examNumber})
+	   		</if>
+	       	order by School_Code ASC,Grade_Id ASC,Class_Id ASC,Total_Score DESC
+	</select>
+	
+	<!--老师和学校管理员导出历史成绩excel -->
+	<select id="selectExportHistoryScoreForTeacherAndAdmin"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select TOP (100) PERCENT * from &{framework.tmis.table.prefix['platform']}V_Course_Score
+	       where School_Year = #{schoolYear} and Term = #{term} and Exam_Type = #{examType}
+	    ]]>
+	    	<if test="grade != null and grade != ''">  
+	           AND Grade_Id = #{grade}
+	       	</if>
+	       	<if test="course != null and course != ''">  
+	           AND Course = #{course}
+	       	</if>
+	       	<if test="schoolCode != null and schoolCode != ''">  
+	           AND School_Code = #{schoolCode}
+	       	</if>
+	       	<if test="stuCode != '' and stuCode != null">
+	   			and (XJFH = #{stuCode}
+	   		</if>
+	   		<if test="examNumber != '' and examNumber != null">
+	   			or Exam_Number = #{examNumber})
+	   		</if>
+	       	<if test="list1 != null and list1.size > 0">
+	       		AND Grade_Id in
+	       		 <foreach collection="list1" index="index" item="item" open="(" separator="," close=")">     
+	  				#{item.grade}
+	   			</foreach>
+	   			AND Class_Id in
+	       		 <foreach collection="list1" index="index" item="item" open="(" separator="," close=")">     
+	  				#{item.class}
+	   			</foreach>
+	       	</if>
+	       	order by Grade_Id ASC,Class_Id ASC,Total_Score DESC
+	       	
+	       	
+	</select>
+	
+	<!--根据登录名查询角色code -->
+	<select id="selectRoleCodeByLoginName"  parameterType="java.lang.String" resultType="java.lang.String">
+	    <![CDATA[
+	       	select r.ROLE_CODE from &{framework.tmis.table.prefix.bua['platform']}BUA_ROLE r 
+			left join &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER ru
+			on r.ROLE_ID = ru.ROLE_ID
+			left join &{framework.tmis.table.prefix.bua['platform']}BUA_USER u
+			on ru.USER_ID = u.USER_ID
+			where u.USER_UID = #{loginName}
+	    ]]>
+	    	
+	</select>
+	
+	<!--选择年级查询班级-->
+	<select id="getclassesByGradeCode"  parameterType="java.util.Map" resultType="java.util.Map">
+	    <![CDATA[
+	       select NJID,Class_Name,Class_No,Grade_No from &{framework.tmis.table.prefix['platform']}tbl_Class_Info 
+	       where School_Code = #{schoolCode} and  Grade_No = #{grade}
+	       order by Class_No ASC
+	    ]]>
+	    	
+	</select>
+</mapper>

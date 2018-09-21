@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="getInfoByLoginName">
+	<!-- 根据教师登录名获取学校code -->
+	<select id="getSchoolCodeByLoginName" parameterType="Map" resultType="java.lang.String">
+		<![CDATA[
+		          select trts.School_Code from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School trts 
+                  inner join &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti on trts.Teacher_Id=tti.Teacher_Pk
+		]]> 
+		<where>
+		  <if test="loginName!=null and loginName!=''">
+		       tti.Login_Name=#{loginName}
+		  </if>
+		</where>
+	</select>
+	
+	<!-- 根据登录用户显示其所属的学校类型和学校名称 -->
+	<select id="getSchoolTypeAndNameByUsername" parameterType="String" resultType="Map">
+		<![CDATA[
+		    select s.School_Name,s.School_Code,s.School_Type_Sequence from &{framework.tmis.table.prefix['platform']}tbl_School_Info as s
+			where s.School_Code = (select ts.School_Code from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School as ts where ts.Teacher_Id = (select t.Teacher_Pk from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info as t where t.Login_Name = #{username}))
+		]]> 
+	</select>
+	
+	<!-- 根据登录名得到用户所带年级和班级 -->
+	<select id="getGradeAndClassByLoginName" parameterType="String" resultType="Map">
+		<![CDATA[
+		   SELECT  
+		        distinct trtg.Grade_Id,tgi.Grade_Name,tci.Class_Name from 
+		        &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti 
+                inner join &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Grade trtg 
+                on trtg.Teacher_Id=tti.Teacher_Pk
+				inner join &{framework.tmis.table.prefix['platform']}tbl_Grade_Info tgi 
+				on trtg.Grade_Id=tgi.id  
+				inner join &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class trtc 
+				on trtc.Teacher_Id=tti.Teacher_Pk
+				inner join &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci 
+				on tci.id=trtc.Class_Id
+				where   tti.Login_Name=#{loginName}
+		]]> 
+		     
+	</select>
+	
+	<!-- 根据登录名得到用户所教科目 -->
+	<select id="getCourseByLoginName" parameterType="java.lang.String" resultType="Map">
+		<![CDATA[
+		         SELECT tci.Course_Code,tci.Course_Name from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info
+  				 tti INNER JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course trtc on tti.Teacher_Pk=trtc.Teacher_Id
+				INNER JOIN &{framework.tmis.table.prefix['platform']}tbl_Course_Info tci on tci.id=trtc.Course_Id
+		        Where  tti.Login_Name=#{loginName}
+		]]> 
+		
+	</select>
+	     
+		
+</mapper>

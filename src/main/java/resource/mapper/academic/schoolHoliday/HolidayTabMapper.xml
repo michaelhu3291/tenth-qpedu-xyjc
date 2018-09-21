@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="holidayTab">	
+
+
+		<!-- 节假日列表查询 -->
+	<select id="selectPaging" needPaging="true" parameterType="Map" resultType="Map">
+		<![CDATA[
+				  select h.*,d.DictionaryName from &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB h
+				     left join &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary  d on h.HOLI_TYPE = d.id
+					where 1=1
+		]]> 
+       	<if test="fastSearch!=null and fastSearch!=''">  
+           AND h.NAME like CONCAT('%',#{fastSearch},'%') 
+       	</if>
+	</select>
+	
+	<!-- 加载校历节假日下拉框 HOLIDAY_TAB-->
+	<select id="getHoliType"  parameterType="Map" resultType="Map">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB  where HOLI_TYPE = #{typeId}
+    ]]>
+	</select>
+	
+	   <!--根据ParentDictionary加载子节点的数据字典的信息 -->
+	<select id="loadChildDictionary" parameterType="Map" resultType="Map">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary=#{parentDictionary}
+   				order by DictionaryCode asc
+    ]]>
+    </select>
+	
+	
+	<!-- 新增节假维护节点 HOLIDAY_TAB -->
+	<insert id="insertHolidayTab" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">
+			SELECT NewID()
+		</selectKey>
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB
+					(ID,NAME,SHORT_NAME, HOLI_TYPE, REMARK, CREATETIME, CREATEPERSON)
+			VALUES(#{id},#{holidayName},#{shortName},#{holiType},#{remark},#{createTime},#{createPerson})
+	    ]]>
+	</insert>
+	
+	
+	<!-- 修改节假维护节点日 HOLIDAY_TAB -->
+	<update id="updateHolidayTab" parameterType="Map">
+		<![CDATA[
+	        update &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB
+			set NAME=#{holidayName},
+				SHORT_NAME=#{shortName},
+				HOLI_TYPE=#{holiType},
+				REMARK=#{remark},
+				UPDATETIME=#{updateTime},
+				UPDATEPERSON=#{updatePerson}
+			where ID = #{holiId}
+    ]]>
+	</update>
+	
+	
+	<!-- 删除节假维护节点 -->
+	<delete id="deleteHolidayTab">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB where ID in 
+    ]]>
+    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+	
+	
+	<!-- 加载节日维护点信息 -->
+	<select id="loadHolidayTab"  parameterType="Map" resultType="Map">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB 
+  			where ID=#{ID}
+    ]]>
+	</select>
+	
+</mapper>

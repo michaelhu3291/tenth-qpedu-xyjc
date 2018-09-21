@@ -1,0 +1,786 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="examNumberManage">
+
+	<!-- 分页显示考试信息 -->
+	<select id="selectExamNumberPaging" needPaging="true"
+		parameterType="Map" resultType="Map">
+		<if test="schoolCode=='3026'">
+			 <![CDATA[
+	      	 select  * from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info 
+	  	  	]]>
+	  	  	<where>
+			Introduced_State='1'
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				AND School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeIdList!=null and gradeIdList.size>0">
+				AND Grade_Code in
+				<foreach collection="gradeIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="examName!=null and examName != ''">
+				AND Exam_Name like CONCAT('%',#{examName},'%')
+			</if>
+		</where>
+		</if>
+		<if test="schoolCode!='3026'">
+		<![CDATA[
+			SELECT examInfo.*,sub.School_Code as subSchool 
+			from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info
+			examInfo LEFT JOIN 
+			&{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam
+			sub on examInfo.Exam_Number=sub.Exam_Code
+			]]>
+			<where>
+			examInfo.Introduced_State='1'
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				AND examInfo.School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeIdList!=null and gradeIdList.size>0">
+				AND examInfo.Grade_Code in
+				<foreach collection="gradeIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="examName!=null and examName != ''">
+				AND examInfo.Exam_Name like CONCAT('%',#{examName},'%')
+			</if>
+			<if test="schoolCode!=null and schoolCode!=''">
+			 	AND sub.School_Code=#{schoolCode}
+			</if>
+		</where>
+		</if>
+	</select>
+	
+	<!-- 导出考试信息 -->
+	<select id="selectExamNumberPagingImport" 
+		parameterType="Map" resultType="Map">
+		<if test="schoolCode=='3026'">
+			 <![CDATA[
+	      	 select  * from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info 
+	  	  	]]>
+	  	  	<where>
+			Introduced_State='1'
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				AND School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeIdList!=null and gradeIdList.size>0">
+				AND Grade_Code in
+				<foreach collection="gradeIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="examName!=null and examName != ''">
+				AND Exam_Name like CONCAT('%',#{examName},'%')
+			</if>
+		</where>
+		</if>
+		<if test="schoolCode!='3026'">
+		<![CDATA[
+			SELECT examInfo.*,sub.School_Code as subSchool 
+			from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info
+			examInfo LEFT JOIN 
+			&{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam
+			sub on examInfo.Exam_Number=sub.Exam_Code
+			]]>
+			<where>
+			examInfo.Introduced_State='1'
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				AND examInfo.School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeIdList!=null and gradeIdList.size>0">
+				AND examInfo.Grade_Code in
+				<foreach collection="gradeIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="examName!=null and examName != ''">
+				AND examInfo.Exam_Name like CONCAT('%',#{examName},'%')
+			</if>
+			<if test="schoolCode!=null and schoolCode!=''">
+			 	AND sub.School_Code=#{schoolCode}
+			</if>
+		</where>
+		</if>
+		order by Exam_Time desc
+	</select>
+
+	<!-- 根据登录名得到该用户所在机构的id -->
+	<select id="getSchoolCodeByLoginName" parameterType="String"
+		resultType="String">
+		<![CDATA[
+		       select ORG_ID from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		       where USER_UID=#{loginName}
+		]]>
+	</select>
+
+
+	<!-- 根据学校code和学籍状态，年级得到学生信息 -->
+	<select id="getStuInfoBySchoolCodeAndStateCode" parameterType="Map"
+		resultType="Map">
+		<![CDATA[
+		       select 
+		         	 Stu_Name,School_Name,SFZJH,tci.Grade_No,trsc.Class_Id,tci.Class_No,
+					 tsi.STATE,STATE_CODE,XJFH,trss.State as stuState
+		       from 
+		          &{framework.tmis.table.prefix['platform']}tbl_Student_Info  tsi
+		       inner join &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class trsc
+  						  on tsi.SFZJH=trsc.Student_Id
+		       INNER  join &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci
+		          on trsc.Class_Id=tci.Class_Pk
+		       LEFT JOIN 
+		          &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School trss 
+		          on tsi.Stu_Pk=trss.Student_Id
+		]]>
+		<where>
+			and tsi.Class_Id &lt;&gt; '' 
+			and tsi.Class_Id is not NULL
+			and trss.School_Code=#{schoolCode}
+			<if test="stateCodeList!=null and stateCodeList.size>0">
+				and trss.State  in
+				<foreach collection="stateCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="classIdList!=null and classIdList.size>0">
+				and tci.Class_No in
+				<foreach collection="classIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeId!=null and gradeId!=''">
+				and tci.Grade_No =#{gradeId}
+			</if>
+			<if test="xjbClassIdList!=null and xjbClassIdList!=''">
+				and trsc.Class_Id  in 
+				<foreach collection="xjbClassIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,tci.Class_No) &gt;= #{minClassNo}
+			   AND convert(int,tci.Class_No) &lt;= #{maxClassNo}
+			</if>
+		</where>
+		order by tci.Class_No ASC
+	</select>
+
+
+	<!-- 根据学校code和不是选中学籍状态得到学生信息 -->
+	<select id="getStuInfoBySchoolCodeAndIsNotStateCode"
+		parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select 
+		         	 Stu_Name,School_Name,SFZJH,tci.Grade_No,trsc.Class_Id,tci.Class_No,
+					 tsi.STATE,STATE_CODE,XJFH,trss.State as stuState
+		       from 
+		          &{framework.tmis.table.prefix['platform']}tbl_Student_Info  tsi
+		       inner join &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class trsc
+  						  on tsi.SFZJH=trsc.Student_Id
+		       INNER  join &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci
+		          on trsc.Class_Id=tci.Class_Pk
+		       LEFT JOIN 
+		          &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School trss 
+		          on tsi.Stu_Pk=trss.Student_Id
+		]]>
+		<where>
+			tci.Class_No &lt;&gt; ''
+			and tci.Class_No is not NULL
+			and trss.School_Code=#{schoolCode}
+			<if test="stateCodeList!=null and stateCodeList.size>0">
+				and trss.State  not in
+				<foreach collection="stateCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="classIdList!=null and classIdList.size>0">
+				and tci.Class_No in
+				<foreach collection="classIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeId!=null and gradeId!=''">
+				and tci.Grade_No =#{gradeId}
+			</if>
+			<if test="xjbClassIdList!=null and xjbClassIdList!=''">
+				and trsc.Class_Id not in 
+				<foreach collection="xjbClassIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,tci.Class_No) &gt;= #{minClassNo}
+			   AND convert(int,tci.Class_No) &lt;= #{maxClassNo}
+			</if>
+		</where>
+		order by tci.Class_No ASC
+	</select>
+
+
+	<!-- 学生与考试信息的关联 -->
+	<insert id="insertStuCodeExamNumber" parameterType="java.util.List">
+		<foreach collection="list" index="index" item="item">  
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber 
+                    (Id,SFZJH,Exam_Number,Create_Time,Create_Person,School_Year,Term,Exam_Type,Exam_Code
+                    ,XJFH,Exam_Number_Isnull,Stu_State,Create_School_Code)
+                     VALUES
+                     (NewID(),#{item.stuCode},#{item.examNumber},GETDATE(),#{item.createPerson},
+                     #{item.schoolYear},#{item.term},#{item.examType},#{item.examCode},#{item.xjfh}
+                    ,#{item.examNumberIsnull},#{item.stuState},#{item.createSchoolCode} )
+	    ]]>
+		</foreach>
+	</insert>
+
+
+	<!-- 考试信息和教导员的关联 用于该学校是否生成考号，该学校是否存在此次考试 -->
+	<insert id="insertschoolCodeExamNumber" parameterType="Map">
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam 
+                    (Id,School_Code,School_Name,Exam_Code,Introduced_State,Is_Exist_Exam_Number,Brevity_Code)
+                     VALUES
+                     (NewID(),#{schoolCode},#{schoolName},#{examCode},'1','0',#{brevityCode})
+	    ]]>
+	</insert>
+
+	<!-- 根据id更新是否生成考号信息 -->
+	<update id="updateExamNumberStateById" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam
+		set 
+		Is_Exist_Exam_Number='1'
+		where Exam_Code=#{examCode}
+		      and School_Code=#{schoolCode}
+    ]]>
+	</update>
+
+	<!-- 根据发布时间更新发布状态 -->
+	<update id="updateIntroducedStateByIntroducedTime"
+		parameterType="Map">
+	    <![CDATA[
+         update &{framework.tmis.table.prefix['platform']}tbl_Exam_Info
+         set Introduced_State='1'
+    ]]>
+    <where>
+          <if test="getTime!=null and getTime!=''">
+              Introduced_Time &lt;= #{getTime}
+          </if> 
+     </where>
+	</update>
+
+	<!-- 显示学生考试考号信息 -->
+	<select id="getStuNumberInfoBySchoolCode" needPaging="true"
+		parameterType="Map" resultType="Map">
+		<![CDATA[
+		          select  
+		             trse.id,tsi.Stu_Pk,tsi.Stu_Name,tsi.Sex,tsi.School_Name,tsi.School_Code,
+		             trse.Exam_Number,tci.Grade_No,tci.Class_No,tsi.SFZJH,tsi.STATE,tsi.STATE_CODE,tci.Is_Xjb,
+		             trse.Exam_Code,tsi.XJFH,trse.Exam_Number_Isnull,trss.State as stuState,trss.School_Code as school
+		          from 
+		            &{framework.tmis.table.prefix['platform']}tbl_Student_Info tsi
+		          RIGHT join 
+		              &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class trsc
+  					  on tsi.SFZJH=trsc.Student_Id
+		          LEFT JOIN 
+		            &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci 
+		            on trsc.Class_Id=tci.Class_Pk
+		          Inner JOIN
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber trse
+                    on trsc.Student_Id=trse.SFZJH
+                  LEFT JOIN 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School trss
+					on tsi.Stu_Pk=trss.Student_Id
+				  LEFT JOIN 
+                   &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse course
+                   on tsi.SFZJH=course.SFZJH
+		]]>
+		<where>
+			and 1=1
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				and trss.School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="examNumber!='' and examNumber!=null">
+				and Exam_Code =#{examNumber}
+			</if>
+			<if test="gradeId!=null and gradeId!=''">
+				AND tci.Grade_No =#{gradeId}
+			</if>
+			<if test="classIdList!=null and classIdList.size>0">
+				and tci.Class_No in
+				<foreach collection="classIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="stuName!=null and stuName != ''">
+				AND (Stu_Name like CONCAT('%',#{stuName},'%')
+			</if>
+			<if test="Xjfh!=null and Xjfh!= ''">
+				OR trse.XJFH like CONCAT('%',#{Xjfh},'%'))
+			</if>
+			<if test="examNumberState!=null and examNumberState!= ''">
+				AND trse.Exam_Number_Isnull =#{examNumberState}
+			</if>
+			<if test="stuState!=null and stuState!=''">
+			     AND trss.State &lt;&gt; '2'
+			</if>
+			<if test="stuRefExam!=null and stuRefExam!=''">
+			     AND Stu_State &lt;&gt;  '0'
+			</if>
+			<if test="createSchoolCode!=null and createSchoolCode!=''">
+			     AND trse.Create_School_Code= #{createSchoolCode}
+			</if>
+			<if test="chooseCourse!=null and chooseCourse!=''">
+			    AND course.Course=#{chooseCourse}
+			</if>
+			<if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,tci.Class_No) &gt;= #{minClassNo}
+			   AND convert(int,tci.Class_No) &lt;= #{maxClassNo}
+			</if>
+		</where>
+	</select>
+
+	<!-- 根据教导员所在学校code 和 考试编号判断该学校教导员是否已经生成考号 -->
+	<select id="getInfoBySchoolCodeAndExamCode" parameterType="Map"
+		resultType="String">
+         <![CDATA[
+           select Is_Exist_Exam_Number 
+           from  
+              &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam 
+           where 
+              School_Code=#{schoolCode}
+              and Exam_Code=#{examCode}
+          ]]>
+	</select>
+
+	<!--根据id更新学生考号 -->
+	<update id="updateExamNumberById" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber
+		set 
+		Exam_Number=#{examNumber},
+		Exam_Number_Isnull=#{examNumberIsNull}
+		where id=#{id}
+    ]]>
+	</update>
+	<!-- 根据id得到学生考号 -->
+	<select id="getExamNumberById" parameterType="String"
+		resultType="Map">
+         <![CDATA[
+           select id, Exam_Number from 
+             &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber 
+           where  
+             id=#{id}
+          ]]>
+	</select>
+
+	<!-- 根据id得到学生考号 -->
+	<select id="examNumberIsExist" parameterType="String"
+		resultType="Map">
+         <![CDATA[
+           select * 
+           from 
+              &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber 
+           where Exam_Number=#{examNumber}
+          ]]>
+	</select>
+
+	<!-- 根据条件得到导出的学生信息 -->
+	<select id="getStuInfoByParams" parameterType="Map" resultType="Map">
+    <![CDATA[
+		       select  
+		             trse.id,tsi.Stu_Pk,tsi.Stu_Name,tsi.Sex,tsi.School_Name,tsi.School_Code,
+		             trse.Exam_Number,tci.Grade_No,tci.Class_No,tsi.SFZJH,tsi.STATE,tsi.STATE_CODE,
+		             trse.Exam_Code,tsi.XJFH,trse.Exam_Number_Isnull,trss.State as stuState,trss.School_Code as school
+		          from 
+		            &{framework.tmis.table.prefix['platform']}tbl_Student_Info tsi
+		          RIGHT join 
+		              &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class trsc
+  					  on tsi.SFZJH=trsc.Student_Id
+		          LEFT JOIN 
+		            &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci 
+		            on trsc.Class_Id=tci.Class_Pk
+		          Inner JOIN
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber trse
+                    on trsc.Student_Id=trse.SFZJH
+                  LEFT JOIN 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School trss
+					on tsi.Stu_Pk=trss.Student_Id
+				  LEFT JOIN 
+                   &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse course
+                   on tsi.SFZJH=course.SFZJH
+		]]>
+		<where>
+			and 1=1
+			<if test="examNumberState!=null and examNumberState!= ''">
+				AND trse.Exam_Number_Isnull =#{examNumberState}
+			</if>
+			<if test="examCode!=null  and examCode!='' ">
+				AND
+				trse.Exam_Code=#{examCode}
+			</if>
+			<if test="stuNameOrXjfh!=null and stuNameOrXjfh != ''">
+				AND (Stu_Name like CONCAT('%',#{stuNameOrXjfh},'%')
+				        OR trse.XJFH like CONCAT('%',#{stuNameOrXjfh},'%'))
+			</if>
+				
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				AND
+				trss.School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeId!=null and gradeId!='' ">
+				AND
+				 tci.Grade_No=#{gradeId}
+			</if>
+			<if test="classIdList!=null and classIdList.size>0">
+				AND  tci.Class_No in
+				<foreach collection="classIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="stuState!=null and stuState!=''">
+			     AND trss.State &lt;&gt; '2'
+			</if>
+			<if test="stuRefExam!=null and stuRefExam!=''">
+			     AND Stu_State &lt;&gt;  '0'
+			</if>
+			<if test="createSchoolCode!=null and createSchoolCode!=''">
+			     AND trse.Create_School_Code= #{createSchoolCode}
+			</if>
+			<if test="chooseCourse!=null and chooseCourse!=''">
+			   AND course.Course=#{chooseCourse}
+			</if>
+			<if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,tci.Class_No) &gt;= #{minClassNo}
+			   AND convert(int,tci.Class_No) &lt;= #{maxClassNo}
+			</if>
+		</where>
+		ORDER BY trss.School_Code,tci.Class_No,trse.Exam_Number ASC
+	</select>
+
+	<!-- 根据考试编号得到其附件 -->
+	<select id="selectIdByAssociatedExamNumber" parameterType="Map"
+		resultType="Map">
+    <![CDATA[
+      select  *  from &{framework.tmis.table.prefix['platform']}tbl_PD_Accessory 
+      where AssociatedObjectID=#{examNumber}
+    ]]>
+	</select>
+
+	<select id="countAllStuBySchoolCodeAndGrade" resultType="java.lang.Integer"
+		parameterType="Map">
+		<![CDATA[
+		          select  
+		            COUNT(*) 
+		          from 
+		            &{framework.tmis.table.prefix['platform']}tbl_Student_Info tsi
+		          RIGHT join 
+		              &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class trsc
+  					  on tsi.SFZJH=trsc.Student_Id
+		          LEFT JOIN 
+		            &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci 
+		            on trsc.Class_Id=tci.Class_Pk
+		          Inner JOIN
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber trse
+                    on trsc.Student_Id=trse.SFZJH
+                  LEFT JOIN 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School trss
+					on tsi.Stu_Pk=trss.Student_Id
+				  LEFT JOIN 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse course
+                    on tsi.SFZJH=course.SFZJH
+		]]>
+		<where>
+			and 1=1
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				and trss.School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="examCode!='' and examCode!=null">
+			   AND Exam_Code=#{examCode}
+			</if>
+			<if test="gradeId!=null and gradeId!=''">
+				AND tci.Grade_No =#{gradeId}
+			</if>
+			<if test="classIdList!=null and classIdList.size>0">
+				and tci.Class_No in
+				<foreach collection="classIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="stuNameOrXjfh!=null and stuNameOrXjfh != ''">
+				AND (tsi.Stu_Name like CONCAT('%',#{stuNameOrXjfh},'%')
+				        OR trse.XJFH like CONCAT('%',#{stuNameOrXjfh},'%'))
+			</if>
+			<if test="examNumberIsnull!='' and examNumberIsnull!=null">
+			   AND trse.Exam_Number_Isnull=#{examNumberIsnull}
+			</if>
+			<if test="examNumberIsExist!='' and examNumberIsExist!=null">
+			   AND trse.Exam_Number_Isnull=#{examNumberIsExist}
+			</if>
+			<if test="stuState!=null and stuState!=''">
+			     AND trss.State &lt;&gt; '2'
+			</if>
+			<if test="stuRefExam!=null and stuRefExam!=''">
+			     AND Stu_State &lt;&gt;  '0'
+			</if>
+			<if test="createSchoolCode!=null and createSchoolCode!=''">
+			     AND trse.Create_School_Code= #{createSchoolCode}
+			</if>
+			<if test="chooseCourse!=null and chooseCourse!=''">
+			    AND course.Course=#{chooseCourse}
+			</if> 
+			<if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,tci.Class_No) &gt;= #{minClassNo}
+			   AND convert(int,tci.Class_No) &lt;= #{maxClassNo}
+			</if>
+		</where>
+	</select>
+	<!--得到某个学校某年级生成考号的人数 -->
+	<select id="countExistExamNumberStuBySchoolCodeAndGrade"
+		resultType="java.lang.Integer" parameterType="Map">
+      <![CDATA[
+       select  
+          COUNT(trse.Exam_Number)
+	   from  
+	       &{framework.tmis.table.prefix['platform']}tbl_Student_Info  tsi 
+	   LEFT JOIN 
+	   	   &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci 
+	   	   on tsi.Class_Id=tci.Class_Pk
+	   LEFT JOIN
+           &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber trse 
+           on tsi.SFZJH=trse.SFZJH 
+      ]]>
+		<where>
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				tsi.School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeId!='' and gradeId!=null">
+				and tci.Grade_No=#{gradeId}
+			</if>
+			<if test="examCode!='' and examCode!=null">
+				and trse.Exam_Code=#{examCode}
+			</if>
+			and trse.Exam_Number_Isnull='1'
+			<if test="classIdList!=null and classIdList.size>0">
+				and tci.Class_No IN
+				<foreach collection="classIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+				<if test="stuNameOrXjfh!=null and stuNameOrXjfh != ''">
+				AND (Stu_Name like CONCAT('%',#{stuNameOrXjfh},'%')
+				        OR trse.XJFH like CONCAT('%',#{stuNameOrXjfh},'%'))
+			</if>
+		</where>
+	</select>
+
+	<!-- 根据学校code得到学校的简码 -->
+	<select id="getBrevityCodeBySchoolCode" resultType="java.lang.String"
+		parameterType="java.lang.String">
+      <![CDATA[
+         select   Brevity_Code  from  &{framework.tmis.table.prefix['platform']}tbl_School_Info
+                 where 
+                 School_Code=#{schoolCode} 
+      ]]>
+	</select>
+
+	<!-- 学校考号生成情况 （区级） -->
+	<select id="testCastGeneration" needPaging="true" resultType="Map"
+		parameterType="Map">
+   <![CDATA[
+    SELECT School_Name,School_Code,Exam_Code,Is_Exist_Exam_Number,Brevity_Code from 
+    &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam 
+    where Exam_Code=#{examCode}
+   ]]>
+	</select>
+
+<select id="getCanNumberStateBySchoolCode"  parameterType="Map" resultType="Map">
+  <![CDATA[
+    SELECT CandidateNumber_Type  from 
+    &{framework.tmis.table.prefix['platform']}tbl_ref_School_CandidateNumberType 
+    where School_Code=#{schoolCode}  and Exam_Code=#{examCode}
+   ]]>
+</select>
+
+<!--得到某一考试下面的学校 -->
+	<select id="countSchoolByExamCode" resultType="java.lang.Integer"
+		parameterType="Map">
+      <![CDATA[                                 
+         SELECT COUNT(School_Code) from (SELECT * from 
+         &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam 
+      ]]>
+      <where>
+			<if test="examCode!='' and examCode!=null">
+				 Exam_Code=#{examCode}
+			</if>
+      </where>
+      <![CDATA[
+          )as s 
+      ]]>
+      <where>
+       and 1=1
+         <if test="examNumberIsExist!='' and examNumberIsExist!=null">
+            and  s.Is_Exist_Exam_Number=#{examNumberIsExist}
+         </if>
+      </where>
+	</select>
+
+	<!-- 得到生成考号的学校code -->
+	<select id="getSchoolCodeAndExistNumber" parameterType="Map"
+		resultType="java.lang.String">
+        <![CDATA[
+                     select School_Code from &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam
+          ]]>
+		<where>
+			Exam_Code=#{examCode}
+			and Is_Exist_Exam_Number=1
+		</where>
+	</select>
+
+<!-- 学校和生成考号类型关联关系 -->
+	<insert id="inserttSchoolCandidateNumberType" parameterType="Map">
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix['platform']}tbl_ref_School_CandidateNumberType 
+                    (Id,School_Code,CandidateNumber_Type,Exam_Code)
+                     VALUES
+                     (NewID(),#{schoolCode},#{candidateNumberType},#{examCode})
+	    ]]>
+	</insert>
+
+
+	<!-- 根据班级id得到班级信息 -->
+	<select id="getClassInfoByClassId" parameterType="java.lang.String" resultType="Map">
+        <![CDATA[
+                 select * 
+                 from 
+                   &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+                 where 
+                   Class_pk=#{classId}
+          ]]>
+	</select>
+	<!-- 根据学生信息得到考试编号     -->
+	<select id="getExamCodeByStuInfo" parameterType="Map" resultType="Map">
+        <![CDATA[
+              select * from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info 
+          ]]>
+          <where>
+            and 1=1
+            and School_Code in
+           <foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+		  </foreach>
+		  <if test="gradeNo!=null and gradeNo!=''">
+  			 and Grade_Code=#{gradeNo} 
+		  </if>
+	 		 and Introduced_State='1'
+          </where>
+	</select>
+	<!-- 重新关联班级的时候，匹配是否已经生成过考号，已经生成，添加一条信息在学生考号关系表 -->
+	<insert id="insertExamNumberForNewStuInfo" parameterType="Map">
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber 
+                    (Id,SFZJH,Create_Time,Create_Person,School_Year,Create_School_Code,Term,
+                    Exam_Type,Exam_Code,XJFH,Exam_Number_Isnull,Stu_State)
+                     VALUES
+                     (NewID(),#{sfzjh},GETDATE(),#{Create_Person},#{School_Year},#{schoolCode},
+                     #{Term},#{Exam_Type},#{Exam_Number},#{xjfh},'0','1')
+	    ]]>
+	</insert>
+	
+	<!-- 用于判断某个学生所在学校年级班级是否已经生成考号     -->
+	<select id="getExamNumberByStuInfo" parameterType="Map" resultType="java.lang.Integer">
+        <![CDATA[
+              select COUNT(*) from &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber 
+          ]]>
+          <where>
+            and 1=1
+           <if test="Exam_Number!=null and Exam_Number!=''">
+            and Exam_Code =#{Exam_Number}
+           </if>
+		  <if test="Create_Person!=null and Create_Person!=''">
+  			 and Create_Person=#{Create_Person} 
+		  </if>
+		  
+          </where>
+	</select>
+
+<!-- 更新已经生成考号调出的学生考号信息 -->
+    <update id="updateExamNumberInfo" parameterType="Map">
+	    <![CDATA[
+            update &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber
+				set Exam_Number_Isnull='0'
+				, Exam_Number =''
+				, Stu_State='0'
+				where Exam_Code=#{Exam_Number}
+				and SFZJH=#{sfzjh}
+				and Create_School_Code=#{createSchoolCode}
+    	]]>
+    	<where>
+     	</where>
+	</update>
+	<!-- 得到某所学校某个年级下面的所有新疆班 -->
+	<select id="getXjbClass" parameterType="Map" resultType="java.lang.String">
+        <![CDATA[
+              SELECT Class_Pk from &{framework.tmis.table.prefix['platform']}tbl_Class_Info 
+              where Grade_No=#{gradeId} and School_Code=#{schoolCode} and Is_Xjb='1'
+          ]]>
+          <if test="classIdList!=null and classIdList.size>0">
+				and Class_No in
+				<foreach collection="classIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+	</select>
+
+</mapper>

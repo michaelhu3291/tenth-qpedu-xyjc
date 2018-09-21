@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="refTeacherSchoool">	
+	<!-- 得到其他的学校，过滤当前学校-->
+	<select id="getSchool" parameterType="java.lang.String" resultType="Map">
+		<![CDATA[
+		          select * from &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+		]]> 
+		<where>
+		  <if test="ids.size>0">
+		  School_Code not in
+		     <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+		  </if>
+		</where>
+	</select>
+	
+	
+	<!-- 得到当前教师所在的学校 -->
+	<select id="getSchoolByTeaId" parameterType="java.lang.String" resultType="Map">
+	     <![CDATA[
+	                select rts.School_Code,tsi.School_Name,tsi.School_Type_Sequence,tsi.School_Short_Name 
+	                from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School rts 
+                    left join &{framework.tmis.table.prefix['platform']}tbl_School_Info  tsi
+                    on rts.School_Code=tsi.School_Code
+                    where  
+                    Teacher_Id =#{id}
+         ]]>
+	</select>
+	<!-- 删除当前老师所在的学校 -->
+	<delete id="deleteSchoolByTeaId">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School where Teacher_Id = #{id}
+    ]]>
+	</delete>
+	<!-- 添加学校 -->
+	<insert id="teaReSchool" parameterType="java.lang.String">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School
+		(id,Teacher_Id,School_Id,School_Code)
+		VALUES(#{id},#{teacherId},null,#{schoolCode})  
+    ]]>
+	</insert>
+</mapper>

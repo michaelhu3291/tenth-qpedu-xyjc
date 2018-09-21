@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="updateStuData">
+	<!-- 批量插入添加学生 -->
+	<insert id="batchInsertStu" parameterType="Map">
+    <![CDATA[
+       INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Student_Info
+				(id,Stu_Name,Sex,Stu_Pk,School_Code,School_Name,Class_Id,Class_Name
+			  	,SFZJH,XJFH,STATE,STATE_CODE,Create_time,Update_Pk)
+		VALUES( NewID(),#{XM},#{XBM},#{PK},#{XXPK},#{XXMC},#{BJID},#{BJ}
+  			  ,#{SFZJH},#{XJFH},#{STATE},#{STATE_CODE},#{updateDate},#{updatePk})
+		]]>
+	</insert>
+	
+ 
+	<!-- 批量删除学生数据 -->
+	<delete id="batchDeleteStu" parameterType="java.lang.String">    
+   <![CDATA[
+   		 DELETE FROM  &{framework.tmis.table.prefix['platform']}tbl_Student_Info 
+         WHERE Stu_Pk=#{PK}    
+     ]]>  
+</delete>   
+	<!-- 批量更新学生数据 -->
+	 <update id="batchUpdateStu"  parameterType="Map">
+	 <![CDATA[
+				  update &{framework.tmis.table.prefix['platform']}tbl_Student_Info 
+				  set Stu_Name=#{XM} ,
+				        Sex=#{XBM},
+				        School_Code=#{XXPK},
+				        School_Name=#{XXMC},
+				        Class_Id=#{BJID},
+				        Class_Name=#{BJ},
+				        SFZJH=#{SFZJH},
+				        XJFH=#{XJFH},
+				        STATE=#{STATE},
+				        STATE_CODE=#{STATE_CODE},
+				        Update_pk=#{updatePk},
+				        Update_Time=#{updateDate}
+				        WHERE Stu_Pk = #{PK}
+				 ]]> 
+    </update>
+    
+    
+    <!--同步更新接口学生数据 -->
+    <insert id="addUpdateStudents" parameterType="java.util.List">
+    <![CDATA[
+        INSERT INTO 
+          	&{framework.tmis.table.prefix['platform']}tbl_Student_Info
+			  (id,Stu_Name,Sex,Stu_Pk,School_Code,School_Name,Class_Id,
+			   Class_Name,SFZJH,XJFH,STATE,Create_time,Update_Pk,
+			   Update_Type)
+		VALUES 
+	]]>	
+	  <foreach collection="list" index="index" item="item" separator=",">    
+  			( NewID(),#{item.XM},#{item.XBM},#{item.PK},#{item.XXPK},
+  			  #{item.XXMC},#{item.BJID},#{item.BJ},
+  			  #{item.SFZJH},#{item.XJFH},#{item.STATE},GETDATE(),
+  			  #{item.updatePk},#{item.updateType})
+	 </foreach>
+	</insert>
+</mapper>

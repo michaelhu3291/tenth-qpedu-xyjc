@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+    <mapper namespace="arrangement">
+    
+   <!-- 根据考试编号得到科目-->
+  	<select id="getCoursesByExamCode"  needPaging="true"   parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+      SELECT  distinct Course,Course_Start_Time,Course_End_Time,Course_Exam_Time,
+      Marking_Time,Marking_Place,Exam_Length,SortNumber,Marking_Start_Time,
+      Marking_End_Time,Marking_End_Date,Course_Exam_Type
+      from 
+	      &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course 
+    ]]>
+    <where>
+      and 1=1
+        <if test="examCode!='' and examCode!=null" >
+          and  Exam_Code=#{examCode} 
+        </if>
+    </where>
+    </select>
+    <!-- 根据年级和科目得到老师 -->
+    <select id="getTeacherByCourseAndGrade"  needPaging="true"  parameterType="Map" resultType="Map">
+        <![CDATA[
+             SELECT tti.Teacher_Pk,tti.Teacher_Name,trtc.Course_Id,trts.state
+			 FROM   &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti  INNER JOIN  
+			               &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course 
+					               trtc on tti.Teacher_Pk=trtc.Teacher_Id INNER JOIN  
+ 					       &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School trts  
+                                   on tti.Teacher_Pk=trts.Teacher_Id
+        ]]> 
+        <where>
+        and 1=1
+          <if test="schoolCode!=null and schoolCode!=''">
+              and trts.School_Code=#{schoolCode}
+          </if>
+           <!-- <if test="gradeId!=null and gradeId!=''">
+              and tclass.Grade_Id=#{gradeId}
+          </if> -->
+           <if test="course!=null and course!=''">
+              and trtc.Course_Id=#{course}
+          </if>
+           <if test="notCourse!=null and notCourse!=''">
+              and trtc.Course_Id &lt;&gt; #{notCourse}
+          </if>
+          <if test="teacherPkList!=null and teacherPkList.size>0">
+               and tti.Teacher_Pk not in 
+               <foreach collection="teacherPkList" index="index" item="item" open="(" separator="," close=")">     
+	  		   #{item}
+	   	      </foreach>
+          </if>
+             and trts.state in ('0','4')
+        </where>
+    </select>
+    <!-- 添加阅卷人 -->
+    <insert id="addTeacherRefExam" parameterType="Map">
+       <selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Exam
+			(Id,Exam_Code,Teacher_Id,Course_Code,School_Code)
+			VALUES
+			(#{id},#{examCode}, #{teacherId},#{course},#{schoolCode})
+	    ]]>
+    </insert>
+    <!-- 删除阅卷人 -->
+    <delete id="deleteTeacherRefExam" >
+         <![CDATA[
+             delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Exam
+         ]]>
+         <where>
+         <if test="examCode!='' and examCode!=null ">
+          Exam_Code=#{examCode}
+         </if>
+         <if test="course!='' and course!=null ">
+         and Course_Code=#{course}
+         </if>
+         
+         <if test="schoolCode!='' and schoolCode!=null ">
+         and School_Code=#{schoolCode}
+         </if>
+            
+         </where>
+    </delete>
+    <!-- 得到选中的老师 -->
+    <select id="getSelectedTeacher"  parameterType="Map" resultType="Map" >
+        <![CDATA[
+                 SELECT 
+                           tti.Teacher_Pk,tti.Teacher_Name,trts.School_Code,trte.Course_Code,trte.Exam_Code,trts.state 
+                 from  
+                          &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti  inner join 
+                          &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Exam trte
+                                 on trte.Teacher_Id=tti.Teacher_Pk inner join 
+                          &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School
+                                 trts on tti.Teacher_Pk=trts.Teacher_Id
+        ]]>
+        <where>
+        <if test="examCode!=''  and examCode!=null">
+            trte.Exam_Code=#{examCode} 
+        </if>
+         <if test="course!=''  and course!=null">
+              and trte.Course_Code=#{course}
+        </if>
+        <if test="schoolCode!=null and schoolCode!=''">
+               and   trts.School_Code=#{schoolCode}
+         </if>
+          and trts.state in ('0','4')
+        </where>
+    </select>
+    <!-- 得到某次考试下面某一科目相关学校所安排的阅卷人详情 -->
+    <select id="getSchoolArrangementByExamCodeAndCourse"   needPaging="true" parameterType="Map" resultType="Map">
+        <![CDATA[
+            SELECT  
+                  distinct School_Code,Brevity_Code   
+            from  
+                  &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam
+        ]]>
+        <where>
+            <if test="examCode!=''  and examCode!=null">
+                Exam_Code=#{examCode} 
+        </if>
+        </where>
+    </select>
+    <!-- 得到某次考试下面的科目阅卷人总数 -->
+    <select id="countArrangementNum"  parameterType="Map" resultType="java.lang.Integer">
+        <![CDATA[
+                SELECT count(trte.Teacher_Id) 
+                from  
+                        &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti  inner join 
+                        &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Exam trte
+                        on trte.Teacher_Id=tti.Teacher_Pk inner join 
+                        &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School
+                        trts on tti.Teacher_Pk=trts.Teacher_Id
+        ]]>
+        <where>
+          and 1=1
+           <if test="examCode!=''  and examCode!=null">
+            and trte.Exam_Code=#{examCode} 
+          </if>
+          <if test="course!=''  and course!=null">
+              and trte.Course_Code=#{course}
+         </if>
+              and trts.state in ('0','4')
+        </where>
+    </select>
+    <!-- 得到学校简称，用于青浦管理员查看各校的阅卷人 -->
+    <select id="getSchoolShortName" parameterType="Map" resultType="Map">
+       <![CDATA[
+            SELECT School_Short_Name,School_Code ,Brevity_Code
+            from &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+            where School_Code in ( SELECT DISTINCT trte.School_Code
+              from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Exam trte  
+              inner join  &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti
+              on trte.Teacher_Id=tti.Teacher_Pk  
+              where trte.Exam_Code=#{examCode} 
+              and trte.Course_Code=#{course}
+              )
+       ]]>
+       
+    </select>
+   <!-- 得到已经安排阅卷人的学校 -->
+     <select id="getExistArrangementPading"  needPaging="true"   parameterType="Map" resultType="Map">
+       <![CDATA[
+            SELECT School_Short_Name,School_Code ,Brevity_Code
+            from &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+            where School_Code in ( SELECT distinct trte.School_Code
+              from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Exam trte  
+              inner join  &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti
+              on trte.Teacher_Id=tti.Teacher_Pk  
+              where trte.Exam_Code=#{examCode} 
+              and trte.Course_Code=#{course}
+              )
+       ]]>
+    </select>
+  
+    <!-- 得到未安排阅卷人的学校信息 -->
+     <select id="getSchoolNotExistArrangementByExamCodePading"  needPaging="true"    parameterType="Map" resultType="Map">
+        <![CDATA[
+            select DISTINCT School_Code,Brevity_Code 
+            from &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam 
+			where School_Code not in 
+              ( SELECT DISTINCT  trte.School_Code
+               from  &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Exam trte  
+              inner join  &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti
+              on trte.Teacher_Id=tti.Teacher_Pk  
+        ]]>
+        <where>
+            <if test="examCode!=''  and examCode!=null">
+                trte.Exam_Code=#{examCode} 
+            </if>
+        <if test="course!=''  and course!=null">
+                  and Course_Code=#{course}
+        </if>
+        </where>
+        <![CDATA[
+          ) 
+        ]]>
+         <if test="examCode!=''  and examCode!=null">
+                 and   Exam_Code=#{examCode} 
+         </if>
+    </select>
+    <!-- 通过学校类型(schoolType)得到对应科目 -->
+	<select id="selectCourseBySchoolCode"   needPaging="true"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName,SortNumber from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode=#{schoolType})
+	       and Remark = 'course' 
+	    ]]>
+	</select>
+	<!--根据学校code得到学校简称和简码 -->
+	<select id="getSchoolShortNameAndBrevityCode"  parameterType="Map"  resultType="Map">
+	     <![CDATA[
+	          SELECT  School_Short_Name,Brevity_Code,School_Code 
+	          from &{framework.tmis.table.prefix['platform']}tbl_School_Info
+	     ]]>
+	     <where>
+	     and 1=1
+	        <if test="School_Code!=''  and School_Code!=null">
+	             and School_Code=#{School_Code}
+	        </if>
+	     </where>
+	</select>
+	
+	
+	  <!-- 得到某次考试下面某一科目相关学校 -->
+    <select id="getSchoolArrangementByExamCode"    parameterType="Map" resultType="Map">
+        <![CDATA[
+            SELECT  
+                  distinct School_Code   ,Brevity_Code
+            from  
+                  &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam
+        ]]>
+        <where>
+            <if test="examCode!=''  and examCode!=null">
+                Exam_Code=#{examCode} 
+        </if>
+        </where>
+        order by Brevity_Code
+    </select>
+    
+    <!-- 得到未安排阅卷人的学校信息 -->
+     <select id="getSchoolNotExistArrangementByExamCode"    parameterType="Map" resultType="Map">
+        <![CDATA[
+            select DISTINCT School_Code,Brevity_Code 
+            from &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam 
+			where School_Code not in 
+              ( SELECT DISTINCT tti.School_Code
+               from  &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Exam trte  
+              inner join  &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti
+              on trte.Teacher_Id=tti.Teacher_Pk  
+        ]]>
+        <where>
+            <if test="examCode!=''  and examCode!=null">
+                trte.Exam_Code=#{examCode} 
+            </if>
+        <if test="course!=''  and course!=null">
+                  and Course_Code=#{course}
+        </if>
+        </where>
+        <![CDATA[
+          ) 
+        ]]>
+         <if test="examCode!=''  and examCode!=null">
+                 and   Exam_Code=#{examCode} 
+            </if>
+        order by Brevity_Code
+    </select>
+    
+    
+ 
+</mapper>

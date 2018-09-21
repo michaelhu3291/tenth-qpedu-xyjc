@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="districtSubjectInstructorInfo">
+
+  <!-- 分页查询得到学科科研员 -->
+	<select id="selectDistrictSubInstructorPaging" needPaging="true" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	    
+	       SELECT USER_ID,USER_UID,USER_NAME,POSITION_NO,COURSE,PERIOD,Position_Name
+	       from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+	       where POSITION_NO=1
+			]]>
+			 <if test="loginName!=''  || loginName!=null">
+           and USER_UID like CONCAT('%',#{loginName},'%' )
+          </if>     
+	</select>
+	<!-- 添加学科教研员 -->
+	<insert id="insertDistrictSubjectInstructorInfo"  parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+                    (USER_ID,ORG_ID,USER_UID,USER_NAME,USER_FULL_NAME,
+                     USER_EMAIL,USER_EMAIL_PUBLIC,USER_PASSWD,USER_TYPE,USER_SEX
+                     ,USER_LOCKED,USER_SEQUENCE,CREATE_USER_NAME,CREATE_TIME,
+                     LAST_UPDATE_USER_NAME,LAST_UPDATE_TIME,VALIDITY_DATE
+                     ,RELATED_ACCOUNT,IDENTIFIER,POSITION_NO,COURSE,CREATE_NO,PERIOD,Position_Name)
+                     VALUES
+                     (#{id},'FBF46778-3AB6-4A34-8698-3E1A67149AC4',#{loginName},#{name},NULL,
+                     '123@123.com','0','1',NULL,NULL,0,NULL,'admin',GETDATE(),NULL,
+                      NULL,NULL,NULL,'2','1',#{course},'1',#{period},#{positionName})
+	    ]]>
+	</insert>
+	<!-- 学科教研员赋予角色权限 -->
+	<insert id="addDistrictSubjectInstructorRole"  parameterType="java.lang.String">
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER 
+                    (ROLE_ID,USER_ID)
+                     VALUES
+                     ('4718E63F-E658-4D2D-B3D1-E63660979F0F',#{userId});
+	    ]]>
+	</insert>
+	<!-- 学科教研员赋予角色权限 -->
+	<insert id="addDistrictInstructorRole"  parameterType="java.lang.String">
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER 
+                    (ROLE_ID,USER_ID)
+                     VALUES
+                     ('B9C099F8-EA0E-49FF-9A09-84EA26B23A4C',#{userId});
+	    ]]>
+	</insert>
+	
+	<!-- 添加教研员年级关系表-->
+	<insert id="addRefInstractorGrade"  parameterType="List">
+		<foreach collection="list" index="index" item="item">
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix.bua['platform']}tbl_ref_Instractor_Grade
+			(Id,Login_Name,Grade)
+			VALUES(#{item.uuid},#{item.loginName},#{item.grade})
+	    ]]>
+	    </foreach>
+	</insert>
+	
+	
+	<!-- 根据登录名得到教研员所在学段 -->   
+		   <select id="getPeriodByLoginName"   parameterType="java.lang.String" resultType="Map">
+		      <![CDATA[
+		          select PERIOD from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		          where USER_UID=#{loginName}
+		      ]]>
+		   </select>
+		   <!-- 根据id加载学科教研员 -->
+		   <!--  <select id="loadDistrictSubjectInstructor"   parameterType="java.lang.String" resultType="Map">
+		      <![CDATA[
+		          select USER_ID,USER_NAME,USER_UID,PERIOD,COURSE from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		          where USER_ID=#{id}
+		      ]]>
+		   </select>-->
+		   <select id="loadDistrictSubjectInstructor"   parameterType="java.lang.String" resultType="Map">
+		      <![CDATA[
+		          select u.USER_UID,u.USER_NAME,u.USER_ID,ig.Grade  from &{framework.tmis.table.prefix.bua['platform']}BUA_USER u 
+				  left join &{framework.tmis.table.prefix.bua['platform']}tbl_ref_Instractor_Grade ig 
+				  on ig.Login_Name=u.USER_UID
+				  where u.USER_UID=(select USER_UID from &{framework.tmis.table.prefix.bua['platform']}BUA_USER where USER_ID=#{id})
+		      ]]>
+		   </select>
+		   
+  <!-- 更新学科教研员 -->
+	<!--  <update id="updateDistrictSubjectInstructor" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+	    set 
+	    USER_NAME=#{name},
+	    USER_UID=#{loginName},
+	    PERIOD=#{period},
+		COURSE=#{course}
+		where USER_ID = #{userId}
+    ]]>
+	</update>-->
+	
+	<update id="updateDistrictSubjectInstructor" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+	    set 
+	    USER_NAME=#{name},
+	    USER_UID=#{loginName},
+		Position_Name=#{positionName}
+		where USER_ID = #{userId}
+    ]]>
+	</update>
+	<!-- 用来验证用户名是否存在 -->
+	 <select id="getInfoByLoginName"   parameterType="java.lang.String" resultType="Map">
+		      <![CDATA[
+		          select USER_ID from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		          where USER_UID=#{loginName}
+		      ]]>
+	 </select>
+		   
+		 <!-- 删除教研员 -->
+	<delete id="deleteDistrictSubjectInstructor">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix.bua['platform']}BUA_USER where USER_ID in 
+	    ]]>
+	    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	</delete>
+	<!-- 删除教研员的角色 -->
+	<delete id="deleteDistrictSubjectInstructorRole">
+		<![CDATA[
+	        delete from  &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER  where USER_ID in 
+	    ]]>
+	    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	</delete>
+	
+	<!-- 清除教研员和年级关系表 -->
+	<delete id="deleteRefInstructorGrade" parameterType="Map">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix.bua['platform']}tbl_ref_Instractor_Grade where Login_Name = #{loginName} 
+	    ]]>
+	    
+	</delete>
+	
+</mapper>

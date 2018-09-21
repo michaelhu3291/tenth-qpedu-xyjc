@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="echarts">
+	<select id="getSchoolNumber" parameterType="Map" resultType="Map">
+		<![CDATA[
+		          select * from &{framework.tmis.table.prefix['platform']}V_School_Number 
+		]]> 
+	</select>
+</mapper>

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="platformDataDictionary">
+	<!-- 插入数据字典 -->
+	<insert id="insertDataDictionary" parameterType="data.platform.entity.EntityPlatformDataDictionary">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary
+		(id,DictionaryCode,DictionaryName,ParentDictionary,DictionaryType,DictionaryModule,Remark,SortNumber,CreateTime,UpdateTime,Operator)
+		VALUES(#{id},#{dictionaryCode},#{dictionaryName},#{parentDictionary},#{dictionaryType},#{dictionaryModule},#{remark},#{sortNumber},#{createTime},#{updateTime},#{operator})  
+    ]]>
+	</insert>
+	
+	<!-- 更新数据字典 -->
+	<update id="updateDataDictionary" parameterType="data.platform.entity.EntityPlatformDataDictionary">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary
+		set DictionaryName=#{dictionaryName},
+		DictionaryCode=#{dictionaryCode},
+		ParentDictionary=#{parentDictionary},
+		DictionaryType=#{dictionaryType},
+		DictionaryModule=#{dictionaryModule},
+		Remark=#{remark},
+		SortNumber=#{sortNumber},
+		UpdateTime=#{updateTime},
+		Operator=#{operator} where id = #{id}
+    ]]>
+	</update>
+	
+	<!-- 加载数据字典 -->
+	<select id="loadDataDictionary" parameterType="java.lang.String" resultType="data.platform.entity.EntityPlatformDataDictionary">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where id = #{id}
+    ]]>
+	</select>
+	
+	<!-- 删除数据字典 -->
+	<delete id="deleteDataDictionary">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where id in 
+    ]]>
+    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+	<!-- 分页查询 -->
+	<select id="selectPaging" needPaging="true" parameterType="Map" resultType="data.platform.entity.EntityPlatformDataDictionary">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}V_Platform_DataDictionary_Tree 
+    ]]>
+    <where>
+    	<if test="dictionaryName!=null and dictionaryName!=''">  
+           AND DictionaryName like CONCAT('%',#{dictionaryName},'%')
+       	</if>
+       	<if test="dictionaryCode!=null and dictionaryCode!=''">  
+           AND DictionaryCode like CONCAT('%',#{dictionaryCode},'%')
+       	</if>
+   	</where>
+	</select>
+	
+	<!-- 查询数据字典树 -->
+	<resultMap id="dataDictionaryTreeMap" type="data.framework.data.DataTree">
+		<result property="id" column="id" />
+		<result property="label" column="DictionaryName" />
+		<result property="dictionaryCode" column="dictionaryCode" />
+		<result property="remark" column="remark" />
+
+		<collection property="children" column="id" ofType="data.framework.data.DataTree" javaType="java.util.ArrayList" select="selectChildDataDictionary">
+			<result property="id" column="id" />
+			<result property="label" column="DictionaryName" />
+            <result property="dictionaryCode" column="dictionaryCode" />
+            <result property="remark" column="remark" />
+		</collection>
+	</resultMap>
+    
+	<select id="selectTreeDataDictionary" parameterType="Map" resultMap="dataDictionaryTreeMap">
+	<![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary is null or ParentDictionary = '' order by DictionaryCode
+    ]]>
+	</select>
+	
+	<select id="selectChildDataDictionary" resultMap="dataDictionaryTreeMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary = #{id} order by DictionaryCode
+    ]]>
+	</select>
+
+    <select id="selectTreeDataDictionaryByParentCode" parameterType="String" resultMap="dataDictionaryTreeMap">
+        <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary
+        where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode = #{parentCode})
+        order by DictionaryCode
+        ]]>
+    </select>
+      <select id="selectDictionaryValueByCode" parameterType="String" resultType="data.platform.entity.EntityPlatformDataDictionary">
+        <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode=#{dictionaryCode}
+        ]]>
+    </select>
+    
+    <!-- 根据父字典code查询数据字典的所有子字典数据 by DictionaryCode-->
+	  <select id="selectByParentCode" parameterType="String" resultType="Map">
+		 <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary
+        where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode = #{codes})
+        order by DictionaryCode
+        ]]>
+    </select>
+	<!-- 根据多个父字典code查询数据字典的所有子字典数据 -->
+	<select id="loadChiadNode" parameterType="Map" resultType="Map">
+		select a.id,a.ParentDictionary,a.DictionaryName,a.DictionaryCode,b.DictionaryCode as P_DIC_CODE from
+		  (
+				  	<![CDATA[
+			        	select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary
+			          ]]>
+			        			where ParentDictionary in 
+			        			(
+				        			<![CDATA[
+				        				select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary
+				        			]]>
+			        				where DictionaryCode in 
+									<foreach collection="codes" index="index" item="item" open="(" separator="," close=")">     
+								  		#{item}
+								   	</foreach>
+			        			)
+			        ) a left join 
+			        
+			        <![CDATA[
+			        	&{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary b on a.ParentDictionary=b.id
+			        ]]>
+        			
+        order by a.SortNumber
+	</select>
+	
+	
+	<!-- 根据多个父字典code查询数据字典的所有子字典数据 -->
+	<select id="loadChiadNode1" parameterType="Map" resultType="Map">
+		SELECT dic.*,pid.P_DIC_CODE 
+		FROM qingpu_quality.dbo.tbl_PD_DataDictionary dic 
+		 join
+			(
+				SELECT id,DictionaryCode as P_DIC_CODE 
+				FROM qingpu_quality.dbo.tbl_PD_DataDictionary
+				WHERE DictionaryCode IN 
+						<foreach collection="codes" index="index" item="item" open="(" separator="," close=")">     
+								  		#{item}
+						</foreach>
+					) pid on dic.ParentDictionary=pid.id 
+		 ORDER BY dic.SortNumber
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<!-- 通过学校类型(schoolType)关联查询科目 -->
+	<select id="selectCoursesBySchoolCode"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName,SortNumber from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode=#{schoolType})
+	       and Remark = 'course' order by SortNumber ASC
+	    ]]>
+	</select>
+	
+	<!-- 通过学校类型(schoolType)关联查询科目 -->
+	<select id="selectCoursesBySchoolType"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode=#{schoolType})
+	       and Remark = 'course'
+	    ]]>
+	    <if test="courseCodeList!=null and courseCodeList.size>0">
+		  and  DictionaryCode not in
+		     <foreach collection="courseCodeList" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+		  </if>
+	    <![CDATA[
+	    	order by SortNumber ASC
+	    ]]>
+	</select>
+	
+	<!-- 通过年级关联查询科目 -->
+	<select id="selectCoursesByGradeCode"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+	       where ParentDictionary=(select ParentDictionary from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+	       where DictionaryCode = #{grade} 
+	       and ParentDictionary not in(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryName='年级'))
+	       and Remark = 'course' order by SortNumber ASC
+	    ]]>
+	</select>
+	
+	<!-- 通过学校类型(schoolType)关联查询年级-->
+	<select id="selectGradessBySchoolCode"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode=#{schoolType})
+	       and Remark = 'grade' order by SortNumber ASC 
+	    ]]>
+	</select>
+	
+	<!-- 通过学校code关联查询学校-->
+	<select id="selectSchoolsBySchoolCode"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select School_Short_Name as School_Name,School_Code from &{framework.tmis.table.prefix['platform']}tbl_School_Info where School_Type_Sequence=#{schoolTypeSequence}
+	    ]]>
+	</select>
+	
+	<!-- 通过学校类型集合关联查询学校-->
+	<select id="selectSchoolsBySchoolType"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select School_Name,School_Code,School_Short_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+	       where School_Type_Sequence in
+	    ]]>
+	    <foreach collection="schoolTypeSequenceList" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	</select>
+	
+	<!-- 通过学校code查询学校名称-->
+	<select id="selectSchoolNameBySchoolCode"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select School_Name,School_Code from &{framework.tmis.table.prefix['platform']}tbl_School_Info where School_Code=#{schoolCode}
+	    ]]>
+	</select>
+	
+	<!-- 数据字典加载 {schoolYear=ND, schoolType=xxlx, term=xq, examType=kslx}-->
+	<select id="selectDataDictionary"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary in(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode in
+	    ]]>
+	    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	   	<![CDATA[
+	       )
+	    ]]>
+	</select>
+	
+	<!--超级管理员查询学校类型（小初高） -->
+	<select id="selectSchoolTypeForAdmin"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary =(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode = #{schoolType}) order by SortNumber ASC
+	    ]]>
+	</select>
+</mapper>

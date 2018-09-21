@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="courseRefTeacher">	
+   <!-- 得到其他的科目，过滤当前科目-->
+	<select id="getCourse" parameterType="java.lang.String" resultType="Map">
+		<![CDATA[
+		          select * from &{framework.tmis.table.prefix['platform']}tbl_Course_Info 
+		]]> 
+		<where>
+		 Course_Id not in ('ff8080811c9875e7011c9892bd0d000b',
+		 				   'ff8080811c9875e7011c9892deca000c',
+		 				   'ff8080811c98a246011c98c68baa0006')
+		  <if test="ids.size>0">
+		    and id not in
+		     <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+		  </if>
+		</where>
+	</select>
+	
+	
+	 <!-- 得到其他的科目，过滤当前科目,过滤其他类型的学科-->
+	<select id="getCourseByIdAndCoursePid" parameterType="java.lang.String" resultType="Map">
+		<![CDATA[
+		          select * from &{framework.tmis.table.prefix['platform']}tbl_Course_Info 
+		]]> 
+		<where>
+		  <if test="ids.size>0">
+		  id not in
+		     <foreach collection="ids" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+		  </if>
+		   <if test="CoursePid!=null and CoursePid!=''">
+		   and Course_PId = #{CoursePid}
+		  </if>
+		</where>
+	</select>
+	
+	
+	<!-- 得到当前教师所在的科目-->
+	<select id="getCourseByTeaId" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	     
+	                select rts.Course_Id,tsi.Course_Name,tsi.Course_Code from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course rts 
+                    left join &{framework.tmis.table.prefix['platform']}tbl_Course_Info  tsi
+                    on rts.Course_Id=tsi.id
+                    where  
+                    Teacher_Id =#{id} 
+         ]]>
+	</select>
+	
+	<!-- 根据id和当前年得到当前教师所在的科目-->
+	
+	<select id="getCourseByTeaIdAndYear" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	     
+	                select rts.Course_Id,tsi.Course_Name,tsi.Course_Code from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course rts 
+                    left join &{framework.tmis.table.prefix['platform']}tbl_Course_Info  tsi
+                    on rts.Course_Id=tsi.id
+                    where  
+                    Teacher_Id =#{id} and rts.Current_Year = #{currentYear}
+         ]]>
+	</select>
+	
+	<!-- 根据当前教师登录名得到该老师所在学校的学校类型标识-->
+	<select id="getSchoolTypeSequenceByLoginName" parameterType="java.lang.String" resultType="Map">
+	     <![CDATA[
+	      select trts.School_Code,tsi.School_Type_Sequence 
+	      from 
+	      &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School trts 
+          inner join 
+          &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info 
+          tti on trts.Teacher_Id=tti.Teacher_Pk
+          inner join 
+          &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+          tsi on trts.School_Code=tsi.School_Code
+          where tti.Login_Name=#{loginName}
+         ]]>
+	</select>
+	
+	
+	<!-- 删除当前老师所在的科目 -->
+	<delete id="deleteCourseByTeaId" parameterType="Map">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course 
+    ]]>
+    <where>
+    and 1=1
+    <if test="teacherIds.size>0">
+		    and Teacher_Id  in
+		     <foreach collection="teacherIds" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+	 </if>
+	  AND Current_Year = #{currentYear}
+    </where>
+    
+	</delete>
+	
+	
+	<!-- 添加科目 -->
+	<insert id="teaReCourse" parameterType="Map">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course
+		(id,Teacher_Id,Course_Id,Teacher_Type,Current_Year)
+		VALUES(#{id},#{teacherId},#{courseId},#{teacherType},#{currentYear})  
+    ]]>
+	</insert>
+</mapper>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="classRoomTeacher">
+
+	<!-- 分页查询成绩	-->
+	<select id="crtSelectScoreSearchPaging" needPaging="true" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	 	 SELECT * from  &{framework.tmis.table.prefix['platform']}V_Score_Data
+	    ]]>
+	    
+	    <where>
+		  <if test="schoolYear!=null and schoolYear!=''">
+		    School_Year=#{schoolYear}
+		  </if>	
+		   <if test="term!=null and term!=''">
+		    AND  Term=#{term}
+		  </if>
+		   <if test="examType!=null and examType!=''">
+		   AND Exam_Type=#{examType}
+		  </if>
+		   <if test="schoolType!=null and schoolType!=''">
+		   AND School_Type=#{schoolType}
+		  </if>
+		  <if test="grade!=null and grade!=''">
+		   AND Grade_Id=#{grade}
+		  </if>
+		 <if test="school!=null and school!=''">
+			AND School_Code =#{school}
+		</if>
+		</where>
+	  
+	</select>
+
+
+</mapper>

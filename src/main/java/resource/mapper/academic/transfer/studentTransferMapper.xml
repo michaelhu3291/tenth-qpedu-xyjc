@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="studentTransfer">
+ 
+	<!--分页查询调动学生-->
+	<select id="selectPaging" needPaging="true" parameterType="Map" resultType="Map">
+		<![CDATA[
+		         select stu.*,ss.School_New_Adr,s.School_Short_Name  from &{framework.tmis.table.prefix['platform']}tbl_Student_Info as stu
+				left join &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School as ss
+				on stu.Stu_Pk = ss.Student_Id 
+				left join &{framework.tmis.table.prefix['platform']}tbl_School_Info as s
+				on s.School_Code = ss.School_Code
+				where ss.State = '3'   
+		]]>       
+	</select>	
+	
+	<!--导出待调动学生-->
+	<select id="selectImportPaging" parameterType="Map" resultType="Map">
+		<![CDATA[
+		         select stu.*,ss.School_New_Adr,s.School_Short_Name  from &{framework.tmis.table.prefix['platform']}tbl_Student_Info as stu
+				left join &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School as ss
+				on stu.Stu_Pk = ss.Student_Id 
+				left join &{framework.tmis.table.prefix['platform']}tbl_School_Info as s
+				on s.School_Code = ss.School_Code
+				where ss.State = '3'  
+				order by Create_Time desc 
+		]]>       
+	</select>
+	
+	<!-- 本校管理员提交调动学生 -->
+	<update id="updateStudentState" parameterType="Map">
+		<![CDATA[
+			update &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School 
+			set State = '3' , School_New_Adr=#{newadr} 
+			where School_Code = #{schoolCode} and Student_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</update>
+	
+	
+	<!-- 调动前先查询此学生有没有被调走-->
+	<select id="selectIsAlreadyTransfer"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select State from &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School where School_Code = #{schoolCode} and Student_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>       
+	</select>
+	
+	<!--防止重复申请 -->
+	<select id="selectIsRepeatApply"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select State from &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School where School_Code = #{schoolCode} and Student_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>       
+	</select>
+	
+	<!-- 查询提交的记录中有没有非游离状态的-->
+	<select id="selectIsSubmit"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select State from &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School where School_Code = #{schoolCode}  and  Student_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>       
+	</select>
+	
+	<!-- 撤销调度申请 -->
+	<update id="cancelSubmitApply" parameterType="Map">
+		<![CDATA[
+			update &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School set State = '0' where School_Code = #{schoolCode} and Student_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</update>
+	
+	<!-- 添加申请人和申请时间 -->
+	<update id="addCreatePerson" parameterType="Map">
+		<![CDATA[
+			update &{framework.tmis.table.prefix['platform']}tbl_Student_Info set Create_Person = #{create_person},Create_Time = #{create_time} where Stu_Pk in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</update>
+	
+	 <!--添加被调动学生与新学校的关联关系-->
+	<insert id="addrefStudentSchool" parameterType="List">
+	  <foreach collection="list" item="item">
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School
+			(Id,Student_Id,School_Code,State)
+			VALUES(#{item.uuid},#{item.studentPk},#{item.school},'4')
+	    ]]>
+	   </foreach>
+	</insert>
+	
+	<!-- 修改被调动学生在原学校的状态 state=2(调出) -->
+	<update id="updataStudentState" parameterType="Map">
+		<![CDATA[
+			update &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School set State = '2' 
+			where  State = '3' and Student_Id  in
+		]]>
+		<foreach collection="studentPk" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</update>
+	
+	<!--查询code校验学生是不是调回原校籍 -->
+	<select id="selectStudentSchoolCode"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select School_Code from &{framework.tmis.table.prefix['platform']}tbl_Student_Info where Stu_Pk = #{studentPk}    
+		]]>       
+	</select>
+	
+	
+	<!--查询code校验学生是不是调回原校籍 -->
+	<select id="getStuSchoolByState"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select School_Code from &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School 
+		       where Student_Id = #{studentPk}   
+		]]>       
+		<if test="state!=null and state!=''">
+		    and State=#{state}
+		</if>
+		<if test="notState!=null and notState!=''">
+		  and State =#{notState}
+		</if>
+	</select>
+	
+	<!-- 删除该学生和其它学校的关系表数据 -->
+	<delete id="deleterefStudentSchool"  parameterType="String">
+		<![CDATA[
+		      delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School where Student_Id = #{studentPk} and State not in('0')
+		]]>       
+	</delete>
+	
+	 <!--添加一条状态为0的新数据-->
+	<insert id="insertStateRefStudentSchool" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School
+			(Id,Student_Id,School_Code,State)
+			VALUES(#{id},#{studentPk},#{schoolCode},'0')
+	    ]]>
+	</insert>
+	
+	
+	<!-- 查询已调动记录（学生/老师） -->
+	<select id="getTransferHistory" needPaging="true" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       SELECT tth.*,tsi.School_Short_Name FROM &{framework.tmis.table.prefix['platform']}tbl_Transfer_History AS tth  
+	               LEFT JOIN  &{framework.tmis.table.prefix['platform']}tbl_School_Info AS tsi ON tth.School_Code = tsi.School_Code 
+	    ]]>
+	    <where>
+	       AND 1 = 1
+	       AND tth.Role_State = #{state}
+         <if test="schoolCode!= '' and schoolCode != null">
+         AND tth.School_Code =#{schoolCode}
+        </if>
+       <if test="name != '' and name != null">
+         AND tth.Name LIKE CONCAT('%',#{name},'%')
+       </if>
+	       
+	    </where>
+	</select>
+	<!-- 导出已调动记录（学生/老师） -->
+	<select id="importTransferHistory" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       SELECT tth.*,tsi.School_Short_Name FROM &{framework.tmis.table.prefix['platform']}tbl_Transfer_History AS tth  
+	               LEFT JOIN  &{framework.tmis.table.prefix['platform']}tbl_School_Info AS tsi ON tth.School_Code = tsi.School_Code 
+	    ]]>
+	    <where>
+	       AND 1 = 1
+	       AND tth.Role_State = #{state}
+         <if test="schoolCode!= '' and schoolCode != null">
+         AND tth.School_Code =#{schoolCode}
+        </if>
+       <if test="name != '' and name != null">
+         AND tth.Name LIKE CONCAT('%',#{name},'%')
+       </if>
+	    order by tth.Apply_Time desc
+	    </where>
+	</select>
+	<!-- 得到待调动的学生 -->
+	<select id="getStuAndTeacherTrans"   resultType="Map">
+	 <![CDATA[
+		 select top 3 * from  &{framework.tmis.table.prefix['platform']}tbl_tasks_remaining
+		 order by Apply_Time desc
+	 ]]>
+	</select>
+	
+	<!-- 新添人员调动记录 -->
+	<insert id="insertHistory" parameterType="Map">
+	     <selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	     </selectKey> 
+	     <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Transfer_History
+	        (Id,Name,School_Code,Proposer,Direction,Apply_Time,Create_Person,Create_Time,Update_Person,Update_Time,Role_State)
+	        VALUES(#{id},#{name},#{schoolCode},#{proposer},#{direction},#{applyTime},#{createPerson},#{createTime},#{updatePerson},#{updateTime},#{roleState})
+	     ]]>
+	</insert>
+	
+	<select id="getSchoolName" parameterType="Map" resultType="java.lang.String">
+	    <![CDATA[
+	      SELECT School_Short_Name FROM &{framework.tmis.table.prefix['platform']}tbl_School_Info
+	      WHERE School_Code = #{Direction}
+	    ]]>
+	</select>
+	
+	
+	<select id="getStudentByPid"  parameterType="Map" resultType="java.lang.String">
+	 <![CDATA[
+	    SELECT Stu_Name
+	    from &{framework.tmis.table.prefix['platform']}tbl_Student_Info 
+	    where Stu_Pk=#{pkId}
+	 ]]>
+	</select>
+	
+	<select id="getTeacherByPid"  parameterType="Map" resultType="java.lang.String">
+	 <![CDATA[
+	    SELECT  Teacher_Name
+	    from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info 
+	    where Teacher_Pk=#{pkId}
+	 ]]>
+	</select>
+	
+	<!--待办任务-->
+	<insert id="insertTaskRamking" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_tasks_remaining
+			(Id,School_Code,Proposer,Direction,Apply_Time,Role_State,Pk_Id,Name,Title)
+			VALUES(#{id},#{schoolCode},#{create_person},#{newadr},#{create_time},#{roleState},#{pkId},#{name},#{title})
+	    ]]>
+	</insert>
+	
+	<!-- 撤销申请和提交申请时删除代办信息 -->
+		<delete id="removeTransferPson" parameterType="Map">
+				<![CDATA[
+					delete from &{framework.tmis.table.prefix['platform']}tbl_tasks_remaining  where Pk_Id in
+				]]>
+				<foreach collection="pkIdList" item="item" close=")" open="(" separator=",">
+						#{item}
+				</foreach>
+			</delete>
+
+	
+
+</mapper>

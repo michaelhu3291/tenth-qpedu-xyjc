@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="subTeacher">
+	<!-- 分页查询成绩 -->
+	<select id="selectSubTeaScoreSearchPaging" needPaging="true"
+		parameterType="Map" resultType="Map">
+	     <![CDATA[
+	 	 SELECT * from  &{framework.tmis.table.prefix['platform']}V_Score_Data
+	    ]]>
+		<where>
+			<if test="schoolYear!=null and schoolYear!=''">
+				School_Year=#{schoolYear}
+			</if>
+			<if test="term!=null and term!=''">
+				AND Term=#{term}
+			</if>
+			<if test="examType!=null and examType!=''">
+				AND Exam_Type=#{examType}
+			</if>
+			<if test="schoolType!=null and schoolType!=''">
+				AND School_Type=#{schoolType}
+			</if>
+			<if test="grade!=null and grade!=''">
+				AND Grade_Id=#{grade}
+			</if>
+			<if test="school!=null and school!=''">
+				AND School_Code =#{school}
+			</if>
+			<if test="classs!=null and classs.size>0">
+				AND Class_Id in
+				<foreach collection="classs" index="index" item="item" open="("
+					separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+	</select>
+
+
+	<!--根据当前年级的到班级 -->
+	<select id="getClassByGrade" parameterType="java.lang.String"
+		resultType="Map">
+	     <![CDATA[
+	                SELECT tci.Class_Name from 
+					&{framework.tmis.table.prefix['platform']}tbl_Class_Info tci 
+					inner join &{framework.tmis.table.prefix['platform']}tbl_ref_Class_Grade trcg 
+					on tci.id=trcg.Class_Id
+                    where trcg.Grade_Id=#{gradeId}
+         ]]>
+	</select>
+
+	<!-- 根据班级得到各班级某科目的平均分 -->
+
+	<select id="getClassAvgByClassId" parameterType="java.lang.String"
+		resultType="Map">
+	     <![CDATA[
+	       SELECT avg(Total_Score) as avg,Class_Id  avgName
+           from &{framework.tmis.table.prefix['platform']}V_Course_Score where Course=#{course}
+           GROUP BY Class_Id
+	   ]]>
+	</select>
+
+	<!-- 得到全区某科某年级目平均分 -->
+	<select id="getAvgByCourseAndGradeId" parameterType="Map"
+		resultType="Map">
+	     <![CDATA[
+	       SELECT AVG(Total_Score) as avg,Grade_Id as avgName from 
+	       &{framework.tmis.table.prefix['platform']}V_Course_Score 
+           where Course=#{course} and  Grade_Id=#{gradeId}
+           GROUP BY Grade_Id
+	   ]]>
+	</select>
+
+	<!-- 得到全校某科某年级目平均分 -->
+	<select id="getAvgByCourseAndGradeIdAndSchoolCode"
+		parameterType="Map" resultType="Map">
+	     <![CDATA[
+	       SELECT AVG(Total_Score) as avg, School_Name as avgName from 
+	       &{framework.tmis.table.prefix['platform']}V_Course_Score 
+		   where Course=#{course} and  Grade_Id=#{gradeId} and School_Code=#{schoolCode}
+		   GROUP BY School_Code ,School_Name
+	   ]]>
+	</select>
+	<!-- 根据年级id得到年级名称 -->
+	<select id="getGradeNameByGradeId" parameterType="Map"
+		resultType="Map">
+	     <![CDATA[
+	       SELECT Grade_Name FROM 
+	       &{framework.tmis.table.prefix['platform']}tbl_Grade_Info
+	       where id=#{gradeId}
+	   ]]>
+	</select>
+
+
+	<select id="getSiLv" parameterType="Map" resultType="Map">
+	 <![CDATA[
+	    SELECT 
+	   (
+	    ((SELECT convert(FLOAT,COUNT(Total_Score)
+	   )FROM  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+	   WHERE Total_Score between 90 and 100 AND Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId}))/(SELECT COUNT(Total_Score) FROM 
+	   &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId}))as  Yl ,
+       ((SELECT convert(FLOAT,count(Total_Score))FROM   &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Total_Score between 80 and 89 
+       AND Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId})/
+       (SELECT COUNT(Total_Score) FROM  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId}))  
+       as Ll ,((SELECT convert(FLOAT,count(Total_Score)) FROM &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Total_Score >=80  AND Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId})/
+       (SELECT COUNT(Total_Score) FROM &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId})) as Yll , 
+       ((SELECT convert(FLOAT,count(Total_Score)) FROM   &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Total_Score>= 60 AND Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId})/
+       (SELECT COUNT(Total_Score) FROM  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId})) as Jgl ,Class_Id
+       from  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       where Course=#{course} AND Grade_Id=#{gradeId}
+	   AND School_Code=#{schoolCode} and class_id =#{classId}
+       GROUP BY class_Id
+	   ]]>
+	</select>
+	
+</mapper>

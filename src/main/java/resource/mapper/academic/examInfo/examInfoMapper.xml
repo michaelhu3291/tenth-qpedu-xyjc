@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="examInfo">
+
+<resultMap id="fileAndExamInfoMap" type="data.academic.examInfo.entity.EntityExamInfo">  
+        <id property="id" column="Id"/>  
+        <result property="exam_time" column="Exam_Time"/>
+        <result property="Exam_Type" column="Exam_Type"/>
+        <result property="Exam_Name" column="Exam_Name"/>
+        <result property="Create_Time" column="Create_Time"/>
+        <result property="Create_Person" column="Create_Person"/>
+        <result property="Update_Time" column="Update_Time"/>
+        <result property="Update_Person" column="Update_Person"/>
+        <result property="Term" column="Term"/>
+        <result property="School_Year" column="School_Year"/>
+        <result property="Exam_Number" column="Exam_Number"/>
+        <result property="School_Code" column="School_Code"/>
+        <result property="Grade_Code" column="Grade_Code"/>
+        <result property="Closing_Time" column="Closing_Time"/>
+        <result property="Introduced_Time" column="Introduced_Time"/>
+        <!-- 关联附件信息-->
+        <collection property="files"  ofType="data.platform.entity.EntityPlatformFile" javaType="java.util.ArrayList">
+			<id property="id" column="f_id"/>  
+        	<result property="fileName" column="f_FileName"/>
+        	<result property="path" column="f_Path"/>
+        	<result property="fileNameInServer" column="f_FileNameInServer"/>
+		</collection>
+   </resultMap>
+
+
+
+
+ 	 <!--添加考试信息 -->
+	<insert id="addExam" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Exam_Info
+			(Id,Exam_Time,
+			Exam_Name,
+			Create_time,
+			Create_Person,
+			Exam_Type,
+			School_Year,
+			Term,
+			Exam_Number,
+			School_Code,
+			Number_State,
+			Grade_Code,
+			Introduced_Time,
+			Closing_Time,
+			Introduced_State)
+			VALUES
+			(
+			#{id},
+			#{exam_time},
+			#{exam_name},
+			#{create_time},
+			#{create_person},
+			#{examType},
+			#{schoolYear},
+			#{term},
+			#{examNumber},
+			#{schoolCode},
+			'0',
+			#{grade},
+			#{introducedTime},
+			#{closingTime},
+			#{introducedState}
+			)
+	    ]]>
+	</insert>
+	
+	
+	<!-- 根据子节点得到父节点code ，用于得到科目和学校-->
+		<select id="getParentDictionaryByDicCode"  parameterType="java.lang.String" resultType="Map">
+	    <![CDATA[
+					SELECT   ParentDictionary  FROM &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+					where DictionaryCode=#{gradeCode}
+	                and Remark='grade'
+	    ]]>
+	</select>
+	
+	
+
+
+	<!--根据子节点得到父节点id -->
+		<select id="getParIdByDicCode"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+						SELECT DictionaryCode,DictionaryName FROM 
+                        &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+	    ]]>
+	    <where>
+	    <if test="idList!=null || idList.size>0">
+	        id in
+	       <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	    </if>
+	    </where>
+	    ORDER BY SortNumber
+	</select>
+	
+	
+	<!--根据父节点得到子节点  （学科） -->
+	<select id="getCourseByParentDictionary" needPaging="true"   parameterType="Map" resultType="Map">
+    <![CDATA[
+		SELECT DISTINCT DictionaryCode,DictionaryName,SortNumber FROM &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+    ]]>
+    <where>
+       Remark='course'
+       <if test="parentIdList!=null and parentIdList.size>0">
+          And ParentDictionary in 
+          <foreach collection="parentIdList" index="index" item="item" open="(" separator="," close=")">     
+  	    	#{item}
+   	   </foreach>
+       </if>
+    </where>
+    <![CDATA[
+    	order by SortNumber asc
+    ]]>
+	</select>
+	
+	<!-- 根据学校类型集合得到学校code和学校姓名 -->
+	<select id="getSchoolCodeAndShoolName"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+						SELECT School_Code,School_Name FROM 
+                        &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+	    ]]>
+	    <where>
+	    <if test="schoolTypeList!=null || schoolTypeList.size>0">
+	         School_Type_Sequence in
+	       <foreach collection="schoolTypeList" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	    </if>
+	    </where>
+	    ORDER BY School_Type_Sequence
+	</select>
+	
+	<!--分页查询 -->
+	<select id="selectExamPaging" needPaging="true" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select  e.Id,e.Exam_Time,e.Exam_Type,e.Exam_Name,e.Create_Time,e.Create_Person,e.Update_Time,e.Update_Person,e.Exam_code,
+	               e.School_Year,e.Term,e.Exam_Number,e.School_Code,e.Number_State,e.Grade_Code,e.Introduced_Time,e.Closing_Time,e.Introduced_State
+	       from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info e 
+	    ]]>
+	    <where>
+	    	<if test="examName!=null and examName != ''">  
+	           AND Exam_Name like CONCAT('%',#{examName},'%')
+	       	</if>
+	       	<if test="schoolCode!=null and schoolCode!=''">
+	       		and School_Code=#{schoolCode}
+	       	</if>
+	       <if test="gradeIdList!=null and gradeIdList.size>0">
+		       AND Grade_Code in 
+		     <foreach collection="gradeIdList" index="index" item="item" open="(" separator="," close=")">
+		         #{item}
+		     </foreach>
+		    </if>
+		    <if test="introducedState!='' and introducedState!=null">
+		        and Introduced_State=#{introducedState}
+		    </if>
+	   	</where>
+	</select>
+	
+	<!--查询导出 -->
+	<select id="selectImportExamPaging"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select  e.Id,e.Exam_Time,e.Exam_Type,e.Exam_Name,e.Create_Time,e.Create_Person,e.Update_Time,e.Update_Person,e.Exam_code,
+	               e.School_Year,e.Term,e.Exam_Number,e.School_Code,e.Number_State,e.Grade_Code,e.Introduced_Time,e.Closing_Time,e.Introduced_State
+	       from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info e 
+	    ]]>
+	    <where>
+	    	<if test="examName!=null and examName != ''">  
+	           AND Exam_Name like CONCAT('%',#{examName},'%')
+	       	</if>
+	       	<if test="schoolCode!=null and schoolCode!=''">
+	       		and School_Code=#{schoolCode}
+	       	</if>
+	       <if test="gradeIdList!=null and gradeIdList.size>0">
+		       AND Grade_Code in 
+		     <foreach collection="gradeIdList" index="index" item="item" open="(" separator="," close=")">
+		         #{item}
+		     </foreach>
+		    </if>
+		    <if test="introducedState!='' and introducedState!=null">
+		        and Introduced_State=#{introducedState}
+		    </if>
+		    order by Exam_Time desc
+	   	</where>
+	</select>
+	
+	<!-- 删除考试 -->
+	<delete id="deleteExam">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info where Id in 
+	    ]]>
+	    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	</delete>
+	
+	
+	<select id="selectIdByAssociatedObjectID"  parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+      select id from &{framework.tmis.table.prefix['platform']}tbl_PD_Accessory 
+    ]]>
+    <where>
+    <if test="examNumberList!=null || examNumberList.size>0">
+       AssociatedObjectID in 
+           <foreach collection="examNumberList" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+    </if>
+      
+    </where>
+	</select>
+	<!-- 删除考试对应的附件 -->
+	
+	<delete id="deleteAccessory">
+	<![CDATA[
+	   delete from &{framework.tmis.table.prefix['platform']}tbl_PD_Accessory where
+	    AssociatedObjectID in
+	 ]]>
+	 <foreach collection="associatedObjectId" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	 </delete>
+	<!-- 根据id查询考试-->
+	<select id="selectExamById"  parameterType="Map" resultMap="fileAndExamInfoMap">
+    <![CDATA[
+      select  e.Id,e.Exam_Time,e.Exam_Type,e.Exam_Name,e.Create_Time,e.Create_Person,e.Update_Time,e.Update_Person,e.Exam_code,
+	          e.School_Year,e.Term,e.Exam_Number,e.School_Code,e.Number_State,e.Grade_Code,e.Introduced_Time,e.Closing_Time,e.Introduced_State,
+              f.id as f_Id,f.FileName as f_FileName,f.FileNameInServer as f_FileNameInServer, f.FilePathInServer as f_Path
+      from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info e  
+      left join &{framework.tmis.table.prefix['platform']}tbl_PD_Accessory f
+      on e.Exam_Number=f.AssociatedObjectID
+       where e.Id = #{id}
+    ]]>
+	</select>
+	<!-- 根据发布学校，考试名等查询考试-->
+	<select id="selectExamBySchoolCode"  parameterType="Map" resultMap="fileAndExamInfoMap">
+    <![CDATA[
+      select * from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info where Exam_Name=#{exam_name} and
+      School_Code=#{schoolCode}
+    ]]>
+	</select>
+	<!-- 修改考试 -->
+	<update id="updateExamById" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_Exam_Info
+		set Exam_Time=#{exam_time},
+		Term=#{term},
+		Grade_Code=#{grade},
+		Exam_Type=#{examType},
+		School_Year=#{schoolYear},
+		Exam_Number=#{examNumber},
+		Exam_Name=#{exam_name},
+		Update_Person=#{update_person},
+		Update_Time=#{update_time},
+		Introduced_Time=#{introducedTime},
+		Closing_Time=#{closingTime},
+		Introduced_State=#{introducedState}
+		where id = #{id}
+    ]]>
+	</update>
+	
+	<!-- 删除考试前判断考号有无生成-->
+	<select id="selectExamNumberIsExist"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	        select  e.Id,e.Exam_Time,e.Exam_Type,e.Exam_Name,e.Create_Time,e.Create_Person,e.Update_Time,e.Update_Person,e.Exam_code,
+	                e.School_Year,e.Term,e.Exam_Number,e.School_Code,e.Number_State,e.Grade_Code,e.Introduced_Time,e.Closing_Time,e.Introduced_State,
+	                se.id,se.School_Code,se.Exam_Code,se.Introduced_State,se.Is_Exist_Exam_Number,se.School_Name 
+	        from  &{framework.tmis.table.prefix['platform']}tbl_Exam_Info as e 
+	        inner join &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam as se
+			on e.Exam_Number = se.Exam_Code where
+			se.Is_Exist_Exam_Number='1'
+			and  e.Id in
+	    ]]>
+	    <foreach collection="selArr" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	</select>
+	
+	
+	    <!-- 根据学校code得到考试信息表中考试编号后四位流水号最大的值 -->
+      <select id="getExamNumberBySchoolCode"  parameterType="java.lang.String" resultType="java.lang.String">
+		<![CDATA[
+		         select max(RIGHT(Exam_Number,4)) as Exam_Number from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info
+	              where School_Code=#{schoolCode}
+		]]>   
+	</select>
+	
+	<!-- 根据当前考试编号的到当前考试编号下面的学校 -->
+	<select id="selectSchoolByExamCode"  parameterType="java.lang.String"  resultType="Map">
+    <![CDATA[
+      SELECT School_Code,School_Name from 
+      &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam where Exam_Code=#{examCode}
+    ]]>
+	</select>
+	
+	
+	<!-- 删除跟此次考试相关的学校-->
+	<delete id="deleteExamRefSchool">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam 
+	    ]]>
+	    <where>
+	    <if test="examCode!=null || examCode.size>0">
+	       Exam_Code in  
+	       <foreach collection="examCode" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	    </if>
+	    </where>
+	</delete>
+	
+	<!-- 更新与 相关的附件的考试 编号 -->
+	  <update id="updateExamRefAccessory" parameterType="Map">
+	    <![CDATA[
+        update  &{framework.tmis.table.prefix['platform']}tbl_PD_Accessory 
+		set AssociatedObjectID=#{examNumber}
+		where AssociatedObjectID = #{oldExamCode}
+    ]]>
+	</update>
+	
+	<!-- 根据用户id得到用户角色 -->
+	<select id="getRoleByUserId"   parameterType="java.lang.String" resultType="java.lang.String" >
+	   <![CDATA[
+	        SELECT br.ROLE_CODE 
+	        from &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER ru 
+	        LEFT JOIN &{framework.tmis.table.prefix.bua['platform']}BUA_ROLE
+              br ON ru.ROLE_ID=br.ROLE_ID where 
+              ru.USER_ID=#{userId}
+	]]>	
+	</select>
+	
+	
+	
+</mapper>

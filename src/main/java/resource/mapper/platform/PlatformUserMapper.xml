@@ -1,0 +1,767 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="platformUser">
+	<!-- 用户和组织机构多对一关系结果 -->
+	<resultMap id="userMap" type="data.platform.entity.EntityPlatformUser">  
+        <id property="id" column="id"/>  
+        <result property="chineseName" column="ChineseName"/>  
+        <result property="englishName" column="EnglishName"/>
+        <result property="adAccount" column="ADAccount"/>
+        <result property="loginAccount" column="LoginAccount"/>
+        <result property="loginPassword" column="LoginPassword"/>
+        <result property="organizationId" column="OrganizationID"/>
+        <result property="officePhone" column="OfficePhone"/>
+        <result property="mobile" column="Mobile"/>
+        <result property="officeMail" column="OfficeMail"/>
+        <result property="status" column="Status"/>
+        <result property="lastLoginTime" column="LastLoginTime"/>
+        <result property="remark" column="Remark"/>
+        <result property="createTime" column="CreateTime"/>
+        <result property="updateTime" column="UpdateTime"/>
+        <result property="operator" column="Operator"/>
+        <result property="position" column="Position"/>
+        <result property="seqNums" column="SeqNums"/>
+        <result property="sex" column="Sex"/>
+        <association property="organization" column="OrganizationID" javaType="data.platform.entity.EntityPlatformOrganization" select="platformOrganization.loadOrganization" />  
+    </resultMap>
+    
+	<insert id="insertUser" parameterType="data.platform.entity.EntityPlatformUser">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Platform_Users
+		(id,ChineseName,EnglishName,Position,SeqNums,ADAccount,LoginAccount,LoginPassword,OrganizationID,OfficePhone,Mobile,OfficeMail,LastLoginTime,Status,Remark,CreateTime,UpdateTime,Operator,Sex)
+		VALUES(#{id},#{chineseName},#{englishName},#{position},#{seqNums},#{adAccount},#{loginAccount},#{loginPassword},#{organizationId},#{officePhone},#{mobile},#{officeMail},#{lastLoginTime},#{status},#{remark},#{createTime},#{updateTime},#{operator},#{sex})  
+    ]]>
+	</insert>
+	
+	<update id="updateUser" parameterType="data.platform.entity.EntityPlatformUser">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_Platform_Users
+		set ChineseName=#{chineseName},
+		EnglishName=#{englishName},
+		Position=#{position},
+		SeqNums=#{seqNums},
+		ADAccount=#{adAccount},
+		LoginAccount=#{loginAccount},
+		OrganizationID=#{organizationId},
+		OfficePhone=#{officePhone},
+		Mobile=#{mobile},
+		OfficeMail=#{officeMail},
+		LastLoginTime=#{lastLoginTime},
+		Status=#{status},
+		Remark=#{remark},
+		UpdateTime=#{updateTime},
+		LoginPassword=#{loginPassword},
+		Operator=#{operator},
+		Sex=#{sex}
+		where id = #{id}
+    ]]>
+	</update>
+	
+	<select id="loadUser" parameterType="java.lang.String" resultMap="userMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users where id = #{id}
+    ]]>
+	</select>
+	<!-- add by lidong  -->
+	<select id="loadUsers" parameterType="java.lang.String" resultMap="userMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users where id in
+    ]]>
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</select>
+	
+	
+	<delete id="deleteUser">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users where id in 
+    ]]>
+    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+	<select id="selectPaging" needPaging="true" parameterType="Map" resultMap="userMap">
+    <![CDATA[
+        select u.*,o.OrganizationCode as OrganizationCode from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u left join 
+        				 &{framework.tmis.table.prefix['platform']}tbl_Platform_Organization o on u.OrganizationID=o.id where 1=1 
+    ]]>
+		<if test="chineseName!=null and chineseName!=''">  
+	        AND ChineseName like CONCAT('%',#{chineseName},'%')
+	   	</if>
+	    <if test="englishName!=null and englishName!=''">  
+	        AND EnglishName like CONCAT('%',#{englishName},'%')
+	    </if>
+	    <if test="loginAccount!=null and loginAccount!=''">  
+	        AND LoginAccount like CONCAT('%',#{loginAccount},'%')
+	    </if>
+	    <if test="organizationId!=null and organizationId!=''">  
+	        AND OrganizationID = #{organizationId} 
+	    </if>
+	    <if test="officePhone!=null and officePhone!=''">  
+	        AND OfficePhone like CONCAT('%',#{officePhone},'%')
+	    </if>
+	    <if test="mobile!=null and mobile!=''">  
+	        AND Mobile like CONCAT('%',#{mobile},'%')
+	    </if>
+	    <if test="officeMail!=null and officeMail!=''">  
+	        AND OfficeMail like CONCAT('%',#{officeMail},'%') 
+	    </if>
+	    <if test="status!=null">  
+	        AND Status = #{status} 
+	    </if>
+	    <if test="departmentId!=null and departmentId!=''">  
+	        AND OrganizationID = #{departmentId} 
+	    </if>
+	</select>
+	
+	<select id="selectUserRoles" parameterType="java.lang.String" resultType="java.lang.String">
+    <![CDATA[
+        select RoleID from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping where UserID = #{userId}
+    ]]>
+	</select>
+	
+	<select id="selectUserRolesAndDefault" parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+        select RoleID,IsDefault from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping where UserID = #{userId}
+    ]]>
+	</select>
+	
+	<delete id="deleteUserRole">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping where UserID in 
+    ]]>
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+	<insert id="insertUserRole" parameterType="Map">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping
+		(id,UserID,RoleID) VALUES
+    ]]>
+    <foreach collection="roleIds" index="index" item="item" separator=",">     
+  		(NewID(),#{userId},#{item})  
+   	</foreach>
+	</insert>
+	
+	<!-- 刷新用户的最后登录时间 -->
+	<update id="flashLoginTime" parameterType="java.lang.String">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_Platform_Users
+		set LastLoginTime=CURRENT_TIMESTAMP 
+		where id = #{userId}
+    ]]>
+	</update>
+	
+	<!-- 根据用户登陆名称查找用户 -->
+	<!-- select 
+		        ID as id,
+		    	XM as chineseName,
+				p.RYH as adAccount,
+				p.RYH as loginAccount,
+				s.Password as loginPassword,
+				'1' as status
+				 from &{framework.tmis.table.prefix['platform']}STU_LOGINPASSWORD s left join 
+								&{framework.tmis.table.prefix['platform']}STU_PERSON p on  (p.SFZJH=s.SFZJH or p.RYH=s.RYH ) where p.RYH=#{loginAccount} or p.SFZJH=#{loginAccount} -->
+	<select id="getUserByLoginName" parameterType="java.lang.String" resultType="data.platform.entity.EntityPlatformUser">
+    <![CDATA[
+    	select * from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users where LoginAccount = #{loginAccount}
+    ]]>
+	</select>
+	
+	<!-- 取得用户默认角色 -->
+	<select id="getDefaultRoleByUser" parameterType="java.lang.String" resultType="java.lang.String">
+    <![CDATA[
+    	SELECT distinct ur.RoleID 
+		FROM &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping ur 
+		inner join &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u on u.id=ur.UserID
+		where u.LoginAccount = #{loginAccount} and ur.IsDefault=1
+    ]]>
+	</select>
+	
+	<!-- 取得用户的功能权限集合 -->
+	<select id="getFunctionAuthoritiesByUser" parameterType="java.lang.String" resultType="java.lang.String">
+	
+    <![CDATA[
+		
+		select distinct CONCAT(m.MenuAddress,';',p.ControlledButtonCode) as AUTHORITY from (
+			SELECT distinct  rf.ControlledMenuID,rf.ControlledButtonCode 
+			FROM &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleFunctionalAuthority rf
+			left join &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping ur
+			on ur.RoleID = rf.RoleID where ur.UserID = 'EAC45928-984A-486D-B49F-E885A4C3E182'
+		) p LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_Platform_Menu m ON m.id=p.ControlledMenuID where m.Status=1
+    ]]>
+	</select>
+	
+	<!-- 取得用户的数据权限集合 -->
+	<select id="getDataAuthoritiesByUser" parameterType="Map" resultType="java.lang.String">
+    <![CDATA[
+    	select distinct TMISCode_ControlledTaxFilingUnit FROM &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleDataAuthority a
+		inner join &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping m on m.RoleID=a.RoleID
+		inner join &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u on u.id=m.UserID
+		inner join &{framework.tmis.table.prefix['platform']}tbl_MD_TaxFilingUnit unit on unit.TMISCode=a.TMISCode_ControlledTaxFilingUnit 
+		where u.LoginAccount = #{loginAccount} and m.RoleID=#{roleId} and unit.Status=1
+    ]]>
+	</select>
+	
+	<!-- 查询用户的功能权限菜单 -->
+	<resultMap id="userMenuTreeMap" type="data.platform.common.MenuTree">
+		<result property="code" column="id" />
+		<result property="title" column="MenuName" />
+		<result property="cls" column="IconClass" />
+		<result property="url" column="MenuAddress" />
+		<collection property="menus" column="{id=id,userId=UserID}" ofType="data.platform.common.MenuTree" javaType="java.util.ArrayList" select="selectChildMenu">
+			<result property="code" column="id" />
+			<result property="title" column="MenuName" />
+			<result property="cls" column="IconClass" />
+			<result property="url" column="MenuAddress" />
+		</collection>
+	</resultMap>
+	
+	<select id="getMenusByUser" parameterType="java.lang.String" resultMap="userMenuTreeMap">
+	<![CDATA[
+        select distinct top 100  t.*,t.UserID from (
+			select distinct m.*,p.UserID from (
+				SELECT distinct rf.*,ur.UserID 
+				FROM &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleFunctionalAuthority rf
+				left join &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping ur
+				on ur.RoleID = rf.RoleID where ur.UserID = #{userId}
+			) p LEFT JOIN &{framework.tmis.table.prefix['platform']}V_Platform_Menu_Tree m ON m.id=p.ControlledMenuID where m.Status=1
+		) t where  t.ParentId is null or t.ParentId = '' order by  t.MenuCode,t.serial  
+    ]]>
+	</select>
+	
+	<!-- 根据当前登陆用户查询用户的角色 -->
+	<select id="getUserRoleInfo" parameterType="java.lang.String" resultType="data.platform.entity.EntityPlatformRole">
+    <![CDATA[
+        
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles where id in (select roleid from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping where userid= #{currentUserId})
+    ]]>
+    </select>
+   
+   <!-- 
+	<select id="selectChildMenu" resultMap="userMenuTreeMap">
+    <![CDATA[
+    	
+		
+		select distinct top 100 PERCENT t.*,t.UserID from (
+			select distinct m.*,p.UserID from (
+				SELECT distinct rf.*,ur.UserID 
+				FROM &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleFunctionalAuthority rf
+				left join &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping ur
+				on ur.RoleID = rf.RoleID where ur.UserID = #{userId}
+			) p LEFT JOIN &{framework.tmis.table.prefix['platform']}V_Platform_Menu_Tree m ON m.id=p.ControlledMenuID where m.Status=1
+		) t where t.ParentId = #{id} order by  t.MenuCode,t.serial
+    ]]>
+	</select>
+	-->
+	
+	<select id="selectChildMenu" resultMap="userMenuTreeMap">
+    <![CDATA[
+		 select distinct top 100 PERCENT t.*,t.UserID from (
+			select distinct m.*,p.UserID from (
+				SELECT distinct rf.*,kk.UserID 
+				FROM &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleFunctionalAuthority rf,
+				 (select distinct ur.UserID,r.id as RoleID  from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping ur inner join 
+				  &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles r on r.id=ur.RoleID where
+				  ur.UserID =#{userId}) as kk
+				where  kk.RoleID = rf.RoleID 
+			)   p , &{framework.tmis.table.prefix['platform']}V_Platform_Menu_Tree m where m.id=p.ControlledMenuID and m.Status=1
+			) t where t.ParentId = #{id} order by  t.MenuCode,t.serial
+    ]]>
+	</select>
+	
+	
+	
+	<!-- 获取当前用户的其他角色（不包含当前角色） -->
+	<select id="getOtherRolesByUserId" parameterType="Map" resultType="data.platform.entity.EntityPlatformRole">
+    <![CDATA[
+        select r.* from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping m
+		inner join &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u on u.id=m.UserID
+		inner join &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles r on r.id=m.RoleID
+		where UserID = #{currentUserId} and r.id != #{currentRoleId}
+    ]]>
+	</select>
+	
+	<!-- 根据当前登陆用户的ADAccount查找与其有相同ADAccount的用户（不包含当前用户） -->
+	<select id="getOtherUsersByADAccount" parameterType="java.lang.String" resultType="data.platform.entity.EntityPlatformUser">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users where ADAccount = #{adAccount} and id != #{currentUserId}
+    ]]>
+	</select>
+	
+	<!-- 修改用户密码 -->
+	<update id="changePassword">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_Platform_Users
+		set LoginPassword=#{newPassword} 
+		where id in
+    ]]>
+    <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</update>
+	
+<!-- 根据角色查询拥有此角色的用户  added by JohnXU @ 2014-6-26 -->
+	<select id="searchUserByRoleName" parameterType="java.lang.String" resultMap="userMap">
+    <![CDATA[
+        select u.id,u.ChineseName,u.EnglishName from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u,&{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping m,
+        &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles r 
+        where u.id=m.userid and r.id=m.roleId and u.status=1 and r.status=1 and r.roleName LIKE  CONCAT('%',#{roleName},'%')
+    ]]>
+    
+	</select>
+	
+<!-- 根据角色ID查询拥有此角色的用户  added by lidong @ 2014-12-12 -->
+	<select id="searchUserByRoleID" parameterType="java.lang.String" resultType="hashmap">
+    <![CDATA[
+        select u.ChineseName as chineseName,o.OrganizationName as organizationName,u.id as userid from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u,&{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping m,
+        &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles r ,
+        &{framework.tmis.table.prefix['platform']}tbl_Platform_Organization o
+        where u.id=m.userid and r.id=m.roleId and u.status=1 and r.status=1 
+        and u.OrganizationID = o.id
+        and r.id in
+    ]]>
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+   	<![CDATA[
+   		order by u.SeqNums  asc
+   	]]>
+	</select>
+	
+<!-- 根据userId查询   用户名称 ,added  by JohnXU @ 2014-6-26 -->
+	<select id="searchUserChineseNameById" parameterType="java.lang.String" resultType="java.lang.String">
+    <![CDATA[
+        select u.ChineseName from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u where u.id=#{id}]]>
+	</select>
+	
+<!-- 根据Rsc Tax对口人的名称短语来查询启用状态的Rsc Tax对口人数据集合   added by JohnXU @ 2014-8-8 -->
+	<select id="searchUserByRoleNameByTerm" parameterType="Map"  resultType="Map">
+    <![CDATA[
+        select u.id as rscTaxSuitId,u.ChineseName as rscTaxSuitName
+        from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u,
+        &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping m,
+        &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles r 
+        where u.id=m.userid and r.id=m.roleId and u.status=1 and r.roleName like CONCAT('%','RSC','%')
+        and (u.ChineseName like CONCAT('%',#{term},'%') OR u.EnglishName like CONCAT('%',#{term},'%'))
+        order by u.ChineseName 
+    ]]>
+	</select>
+	
+	<select id="selectNoticePersonsPaging" needPaging="true" parameterType="Map" resultMap="userMap">
+    <![CDATA[
+        select u.id,u.ChineseName,u.EnglishName 
+        from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u
+        where u.status=1 
+    ]]>
+    <if test="chineseName!=null and chineseName!=''">
+			AND u.ChineseName like CONCAT('%',#{chineseName},'%')  
+	</if>
+	 <if test="englishName!=null and englishName!=''">
+			AND u.EnglishName like CONCAT('%',#{englishName},'%')  
+	</if>
+	</select>
+	
+	<!--查询所有的职位数据 -->
+	<select id="searchUserPosition"  resultType="data.platform.entity.EntityPlatformDataDictionary">
+    <![CDATA[
+        select *
+           from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary u where ParentDictionary ='5B9DC820-F04E-4B39-9F36-AA5E894B78C5'
+    ]]>
+	</select>
+	
+	
+		<!--查询所有的职位数据 -->
+	<select id="getUserMenu_APP"  resultType="Map">
+    <![CDATA[
+    	select distinct m.MenuName,m.MenuCode from (
+				SELECT distinct rf.*,ur.UserID 
+				FROM &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleFunctionalAuthority rf
+				left join &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping ur
+				on ur.RoleID = rf.RoleID where ur.UserID = #{userId}
+			) p LEFT JOIN &{framework.tmis.table.prefix['platform']}V_Platform_Menu_Tree m ON m.id=p.ControlledMenuID where m.Status=1
+			AND
+				(
+					m.ParentId IN(
+						select id from &{framework.tmis.table.prefix['platform']}V_Platform_Menu_Tree where (ParentId is NULL or ParentId='')
+			 				and MenuName in ('通讯录','会议管理','工作周报','日程管理','我的流程','留言板'))
+			 		or 
+				    m.id IN(
+				    	select id from &{framework.tmis.table.prefix['platform']}V_Platform_Menu_Tree where (ParentId is NULL or ParentId='')
+				 			and MenuName in ('通讯录','会议管理','工作周报','日程管理','我的流程','留言板'))
+				 )
+    ]]>
+	</select>
+		<!-- 	AND
+				(
+					m.ParentId IN(
+						select id from &{framework.tmis.table.prefix['platform']}V_Platform_Menu_Tree where (ParentId is NULL or ParentId='')
+			 				and MenuName in ('通讯录','会议管理','工作周报','流程管理','日程管理','我的流程','留言板'))
+			 		or 
+				    m.id IN(
+				    	select id from &{framework.tmis.table.prefix['platform']}V_Platform_Menu_Tree where (ParentId is NULL or ParentId='')
+				 			and MenuName in ('通讯录','会议管理','工作周报','流程管理','日程管理','我的流程','留言板'))
+				 ) -->
+		
+	<!-- 根据登录名查询teacher_pk -->
+	<select id="selectTeacherPkByUserName"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select Teacher_Pk from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info where Login_Name = #{loginName}    
+		]]>       
+	</select>
+	
+	<!-- 查询科任老师的年级班级科目 -->
+	<select id="selectGradeClassCourseByTeacherPk"  parameterType="String" resultType="Map">
+		<![CDATA[
+		    SELECT
+				t.Teacher_Name,
+				t.Teacher_Pk,
+				tg.Grade_Id,
+				g.Grade_Name,
+				tc.Class_Id,
+				c.Class_Name,
+				tco.Course_Id,
+				co.Course_Name,
+				co.Course_Code
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_Teacher_Info t
+			LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class tc ON t.Teacher_Pk = tc.Teacher_Id
+			LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course tco ON t.Teacher_Pk = tco.Teacher_Id
+			LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Grade tg ON t.Teacher_Pk = tg.Teacher_Id
+			LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_Class_Info c ON c.id = tc.Class_Id
+			LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_Grade_Info g ON g.id = tg.Grade_Id
+			LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_Course_Info co ON co.id=tco.Course_Id
+			WHERE
+			t.Teacher_Pk = #{teacherPk}  
+		]]>       
+	</select>
+	
+	<!-- 查询当前用户的学校code(根据登录名) -->
+	<select id="selectSchoolCodeByUserName"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select ts.School_Code from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School as ts where Teacher_Id=(select Teacher_Pk from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info where Login_Name = #{loginName})
+		]]>       
+	</select>
+	
+	<!-- 查询某个年级各个班级的平均分 -->
+	<select id="selectClassAvg"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		   SELECT
+				Class_Id,
+				School_Year,
+				School_Code,
+				AVG (#{Course_Code}) AS yw,
+				COUNT (*) AS '人数'
+			FROM
+				&{framework.tmis.table.prefix['platform']}V_Score_Data
+			WHERE
+				School_Year = '2015-2016'
+			AND School_Code = #{schoolCode}
+			AND Grade_Id = #{Grade_Id}
+			GROUP BY
+				Class_Id,
+				School_Year,
+				School_Code   
+		]]>       
+	</select>
+	
+	<!-- 查询任课老师班级分数段的人数 -->
+	<select id="selectIntervalStuCount"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		   	SELECT
+				Total_Score = CASE
+			WHEN Total_Score BETWEEN 91
+			AND 100 THEN
+				'91-100 '
+			WHEN Total_Score BETWEEN 81
+			AND 90 THEN
+				'81-90 '
+			WHEN Total_Score BETWEEN 71
+			AND 80 THEN
+				'71-80 '
+			WHEN Total_Score BETWEEN 61
+			AND 70 THEN
+				'61-70 '
+			ELSE
+				'60以下 '
+			END,
+			 Count = COUNT (*),
+			 Class_Id
+			FROM
+				&{framework.tmis.table.prefix['platform']}V_Course_Score
+			WHERE
+				School_Code = #{schoolCode}
+			AND Grade_Id = #{Grade_Id}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{Course_Code}
+			AND Class_Id = #{Class_Name}
+			GROUP BY
+				CASE
+			WHEN Total_Score BETWEEN 91
+			AND 100 THEN
+				'91-100 '
+			WHEN Total_Score BETWEEN 81
+			AND 90 THEN
+				'81-90 '
+			WHEN Total_Score BETWEEN 71
+			AND 80 THEN
+				'71-80 '
+			WHEN Total_Score BETWEEN 61
+			AND 70 THEN
+				'61-70 '
+			ELSE
+				'60以下 '
+				
+			END
+			,Class_Id
+		]]>
+		</select>
+		
+		<!-- 查询班主任班级分数段的人数 -->
+	<select id="selectIntervalStuCountforClassRoomTeacher"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		   	SELECT
+				Total_Score = CASE
+			WHEN Total_Score BETWEEN 91
+			AND 100 THEN
+				'91-100 '
+			WHEN Total_Score BETWEEN 81
+			AND 90 THEN
+				'81-90 '
+			WHEN Total_Score BETWEEN 71
+			AND 80 THEN
+				'71-80 '
+			WHEN Total_Score BETWEEN 61
+			AND 70 THEN
+				'61-70 '
+			ELSE
+				'60以下 '
+			END,
+			 Count = COUNT (*),
+			 Class_Id
+			FROM
+				&{framework.tmis.table.prefix['platform']}V_Course_Score
+			WHERE
+				School_Code = #{schoolCode}
+			AND Grade_Id = #{Grade_Id}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Class_Id = #{Class_Name}
+			GROUP BY
+				CASE
+			WHEN Total_Score BETWEEN 91
+			AND 100 THEN
+				'91-100 '
+			WHEN Total_Score BETWEEN 81
+			AND 90 THEN
+				'81-90 '
+			WHEN Total_Score BETWEEN 71
+			AND 80 THEN
+				'71-80 '
+			WHEN Total_Score BETWEEN 61
+			AND 70 THEN
+				'61-70 '
+			ELSE
+				'60以下 '
+				
+			END
+			,Class_Id
+		]]>
+		</select>
+		
+		<!-- 查询班主任班级分数段的人数 -->
+	<select id="selectIntervalStuCountforSchoolPlainAdmin"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		   	SELECT
+				Total_Score = CASE
+			WHEN Total_Score BETWEEN 91
+			AND 100 THEN
+				'91-100 '
+			WHEN Total_Score BETWEEN 81
+			AND 90 THEN
+				'81-90 '
+			WHEN Total_Score BETWEEN 71
+			AND 80 THEN
+				'71-80 '
+			WHEN Total_Score BETWEEN 61
+			AND 70 THEN
+				'61-70 '
+			ELSE
+				'60以下 '
+			END,
+			 Count = COUNT (*),
+			 Grade_Id
+			FROM
+				&{framework.tmis.table.prefix['platform']}V_Course_Score
+			WHERE
+				School_Year = #{schoolYear}
+			AND School_Code = #{schoolCode}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			GROUP BY
+				CASE
+			WHEN Total_Score BETWEEN 91
+			AND 100 THEN
+				'91-100 '
+			WHEN Total_Score BETWEEN 81
+			AND 90 THEN
+				'81-90 '
+			WHEN Total_Score BETWEEN 71
+			AND 80 THEN
+				'71-80 '
+			WHEN Total_Score BETWEEN 61
+			AND 70 THEN
+				'61-70 '
+			ELSE
+				'60以下 '
+				
+			END
+			,Grade_Id
+		]]>
+		</select>
+		
+		<!-- 查询四率为班主任 -->
+	<select id="getSiLvForClassRoomTeacher" parameterType="Map" resultType="Map" statementType="CALLABLE">
+	 <![CDATA[
+	    {call &{framework.tmis.table.prefix['platform']}sp_xksl(#{schoolYear},#{schoolCode},#{Grade_Id},#{term},#{examType},#{Class_Name})}
+	   ]]>
+	</select>
+	
+	<!-- 学校普通管理员查询四率(图表形式展示) -->
+	<select id="getSiLvForSchoolPlainAdmin" parameterType="Map" resultType="Map" statementType="CALLABLE">
+	 <![CDATA[
+	    {call &{framework.tmis.table.prefix['platform']}sp_xkslschoolPlainAdmin(#{schoolYear},#{schoolCode},#{term},#{examType})}
+	   ]]>
+	</select>
+	
+	<!-- 学校普通管理员查询四率(表格形式展示) -->
+	<select id="getSiLvTableForSchoolPlainAdmin" needPaging="true"   parameterType="Map"  resultType="Map">
+	 <![CDATA[
+	 	 select School_Name,Grade_Id,avg(Total_Score) as 'Avg_Score',max(Total_Score) as Max_Score,min(Total_Score) as Min_Score,cast((select count(*)  from &{framework.tmis.table.prefix['platform']}V_Course_Score  where Total_Score between 90 and 100 and School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}) as float)/(select count(*)  from  &{framework.tmis.table.prefix['platform']}V_Course_Score  where School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}) as 'yl',
+		 cast((select count(*)  from &{framework.tmis.table.prefix['platform']}V_Course_Score  where Total_Score between 80 and 89 and School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}) as float)/(select count(*)  from &{framework.tmis.table.prefix['platform']}V_Course_Score  where School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}) as 'll',
+		 cast((select count(*)  from &{framework.tmis.table.prefix['platform']}V_Course_Score  where Total_Score between 80 and 100 and School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}) as float)/(select count(*)  from &{framework.tmis.table.prefix['platform']}V_Course_Score  where School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}) as 'yll',
+		 cast((select count(*)  from &{framework.tmis.table.prefix['platform']}V_Course_Score  where Total_Score >= 60 and School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}) as float)/(select count(*)  from &{framework.tmis.table.prefix['platform']}V_Course_Score  where School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}) as 'jgl' from &{framework.tmis.table.prefix['platform']}V_Course_Score where School_Year = #{schoolYear} and School_Code = #{school} and Term = #{term} and Exam_Type = #{examType} and School_Type = #{schoolType} and Course = #{course}  group by Grade_Id,School_Name
+	   ]]>
+	</select>
+	
+	<!-- 查询学校序号 -->
+	<select id="selectSchoolSequenceBySchoolCode" parameterType="String" resultType="String">
+	 <![CDATA[
+	    select School_Type_Sequence from &{framework.tmis.table.prefix['platform']}tbl_School_Info where School_Code = #{schoolCode}
+	   ]]>
+	</select>
+	
+	<!-- 教导处查询所有学生成绩  -->
+	<select id="selectAllStudentsScore" needPaging="true"   parameterType="Map"  resultType="Map">
+	 <![CDATA[
+	 	 select * from &{framework.tmis.table.prefix['platform']}V_Score_Data 
+	   ]]>
+	   <where>
+	   	<if test="schoolYear != '' and schoolYear != null">
+	   		School_Year = #{schoolYear}
+	   	</if>
+	   	<if test="schoolCode != '' and schoolCode != null">
+	   		and School_Code = #{schoolCode}
+	   	</if>
+	   	<if test="grade != '' and grade != null">
+	   		and Grade_Id = #{grade}
+	   	</if>
+	   	<if test="term != '' and term != null">
+	   		and Term = #{term}
+	   	</if>
+	   	<if test="examType != '' and examType != null">
+	   		and Exam_Type = #{examType}
+	   	</if>
+	   	<if test="stuCode != '' and stuCode != null">
+	   		and (XJFH = #{stuCode}
+	   	</if>
+	   	<if test="examNumber != '' and examNumber != null">
+	   		or Exam_Number = #{examNumber})
+	   	</if>
+	   </where>
+	</select>
+	
+	<!-- 教导处查询导出所有学生excel成绩(多种角色公用的sql)  -->
+	<!-- <select id="selectAllStudentsScoreForSchoolAdmin"   parameterType="Map"  resultType="Map">
+	 	<if test="schoolType == 'xx'">
+			<![CDATA[
+			 select Top 100000 RANK() OVER(ORDER BY Total_Score DESC)AS orderDistrict,a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Xx a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code 
+		    ]]>
+		
+		</if>
+		<if test="schoolType == 'cz'">
+			<![CDATA[
+			 select Top 100000 RANK() OVER(ORDER BY Total_Score DESC)AS orderDistrict,a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Cz a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code 
+		    ]]>
+		
+		</if>
+		<if test="schoolType == 'gz'">
+			<![CDATA[
+			 select Top 100000 RANK() OVER(ORDER BY Total_Score DESC)AS orderDistrict,a.*,b.School_Short_Name from &{framework.tmis.table.prefix['platform']}V_Score_Data_Gz a join &{framework.tmis.table.prefix['platform']}tbl_School_Info b
+			 on a.School_Year = #{schoolYear}
+			 and a.Term = #{term} and a.Exam_Type = #{examType} and b.School_Code = a.School_Code 
+		    ]]>
+		</if>
+	    <if test="grade != null and grade != ''">
+	    	and a.Grade_Id = #{grade}
+	    </if>
+	    <if test="schoolCode != null and schoolCode != ''">
+	    	and a.School_Code = #{schoolCode}
+	    </if>
+	    <if test="stuCode != '' and stuCode != null">
+   			and (a.XJFH = #{stuCode}
+   		</if>
+   		<if test="examNumber != '' and examNumber != null">
+   			or a.Exam_Number = #{examNumber})
+   		</if>
+	    <if test="school != null and school.size > 0">
+	    	and a.School_Code in
+	    	 <foreach collection="school" index="index" item="item" open="(" separator="," close=")">
+	    		#{item}
+    		</foreach>
+	    </if>
+	    <if test="idx != '' and so =='asc'" >
+   			order by a.${idx} ASC
+   		</if>
+   		<if test="idx != '' and so =='desc'" >
+   			order by a.${idx} DESC
+   		</if>
+   		<if test="idx == '' or so ==''">
+   			order by a.School_Code ASC,a.Grade_Id ASC,a.Class_Id ASC,a.Total_Score DESC
+   		</if>
+   		
+	    order by School_Code ASC,Grade_Id ASC,Class_Id ASC,Total_Score DESC
+	</select>
+	 -->
+	<!-- 教导处查询平均分  -->
+	<select id="selectAvgScore"   parameterType="Map"  resultType="Map">
+	 <![CDATA[
+		 	 SELECT
+			Grade_Id,
+			AVG (Total_Score) AS 'Avg_Score'
+		FROM
+			&{framework.tmis.table.prefix['platform']}V_Course_Score
+		WHERE
+			School_Year = #{schoolYear} 
+			and School_Code = #{schoolCode} 
+			and Term = #{term} 
+			and Exam_Type = #{examType}
+		GROUP BY Grade_Id
+	   ]]>
+	</select>
+</mapper>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<!-- 首页-通知公告的显示 -->
+<mapper namespace="announce" >
+
+
+     <!--门户页面前几条的通知/公告  -->
+    <select id="getTop" parameterType="Map" resultType="Map">
+      <![CDATA[
+        SELECT DISTINCT TOP　3 tnb.id,tnb.Title,tnb.Status,tnb.AnnouncementType,
+               tnb.PublishPerson,tnb.PublishDate,tnb.SeqNums,tnb.PublishPersonId,tnb.CreateDate,tnb.PublishDept
+        FROM &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo tnb 
+        INNER JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Announce_School tras ON tnb.id = tras.AnnouncementId    
+        WHERE AnnouncementType LIKE CONCAT('%',#{announceType},'%')
+        AND PublishDate <> ''
+        AND #{validate} BETWEEN tnb.EnableTimeStart AND tnb.EnableTimeEnd       
+        AND SchoolCode = #{schoolCode}       
+        ORDER BY tnb.SeqNums,tnb.PublishDate DESC
+       ]]>
+    </select>
+ 
+
+
+    <!--查询所有的通知/公告  -->
+    <select id="selectNoticesAnnounces" parameterType="Map" resultType="Map">
+      <![CDATA[
+        SELECT DISTINCT tnb.id,tnb.Title,tnb.Status,tnb.AnnouncementType,
+               tnb.PublishPerson,tnb.PublishDate,tnb.SeqNums,tnb.PublishPersonId,tnb.CreateDate,tnb.PublishDept
+        FROM &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo tnb 
+        INNER JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Announce_School tras ON tnb.id = tras.AnnouncementId
+        WHERE AnnouncementType LIKE CONCAT('%',#{announceType},'%')
+        AND tnb.PublishDate <> ''
+        AND #{validate} BETWEEN tnb.EnableTimeStart AND tnb.EnableTimeEnd      
+        AND tras.SchoolCode = #{schoolCode}
+        ORDER BY tnb.SeqNums,tnb.PublishDate DESC
+      ]]>
+    </select>
+       
+
+    
+    <!-- (超级管理员、教研员)查询前几条的通知  -->
+    <select id="getNoticeByAdmin" parameterType="Map" resultType="Map">
+       <![CDATA[
+         SELECT TOP 3 tnb.id,tnb.Title,tnb.Status,tnb.AnnouncementType,
+               tnb.PublishPerson,tnb.PublishDate,tnb.SeqNums,tnb.PublishPersonId,tnb.CreateDate,tnb.PublishDept 
+         FROM &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo tnb
+         WHERE tnb.AnnouncementType LIKE '%通知%'
+         AND tnb.PublishDate <> ''
+         AND #{validate} BETWEEN tnb.EnableTimeStart AND tnb.EnableTimeEnd        
+         AND tnb.PublishPersonId = #{publishPersonId}        
+         ORDER BY tnb.SeqNums,tnb.PublishDate DESC
+       ]]>
+    </select>
+    
+    
+    <!-- (超级管理员、教研员)查询前几条的公告 -->
+    <select id="getAnnounceByAdmin" parameterType="Map" resultType="Map">
+       <![CDATA[
+         SELECT TOP 3 tnb.id,tnb.Title,tnb.Status,tnb.AnnouncementType,
+               tnb.PublishPerson,tnb.PublishDate,tnb.SeqNums,tnb.PublishPersonId,tnb.CreateDate,tnb.PublishDept 
+         FROM &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo tnb
+         WHERE tnb.AnnouncementType LIKE '%公告%'
+         AND tnb.PublishDate <> ''
+         AND #{validate} BETWEEN tnb.EnableTimeStart AND tnb.EnableTimeEnd        
+         AND tnb.PublishPersonId = #{publishPersonId}
+         ORDER BY tnb.SeqNums,tnb.PublishDate DESC
+       ]]>
+    </select>
+    
+    
+    <!-- (超级管理员、教研员)查询所有的通知 -->
+    <select id="selectNoticesByAdmin" parameterType="Map" resultType="Map">
+        <![CDATA[
+          SELECT tnb.id,tnb.Title,tnb.Status,tnb.AnnouncementType,
+               tnb.PublishPerson,tnb.PublishDate,tnb.SeqNums,tnb.PublishPersonId,tnb.CreateDate,tnb.PublishDept 
+          FROM &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo tnb
+          WHERE tnb.AnnouncementType LIKE '%公告%'
+          AND AND tnb.PublishDate <> ''
+          AND #{validate} BETWEEN tnb.EnableTimeStart AND tnb.EnableTimeEnd     
+          AND tnb.PublishPersonId = #{publishPersonId}
+          ORDER BY tnb.SeqNums,tnb.PublishDate DESC
+        ]]>
+    </select>
+    
+    
+    <!-- (超级管理员、教研员)查询所有的公告  -->
+    <select id="selectAnnouncesByAdmin" parameterType="Map" resultType="Map">
+        <![CDATA[
+          SELECT tnb.id,tnb.Title,tnb.Status,tnb.AnnouncementType,
+               tnb.PublishPerson,tnb.PublishDate,tnb.SeqNums,tnb.PublishPersonId,tnb.CreateDate,tnb.PublishDept 
+          FROM &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo tnb
+          WHERE tnb.AnnouncementType LIKE '%公告%'
+          AND AND tnb.PublishDate <> ''
+          AND #{validate} BETWEEN tnb.EnableTimeStart AND tnb.EnableTimeEnd
+          AND tnb.PublishPersonId = #{publishPersonId}
+          ORDER BY tnb.SeqNums,tnb.PublishDate DESC
+        ]]>
+    </select>
+    
+
+    <!-- 得到区级管理员的主键id -->
+    <select id="getAdminId" parameterType="Map" resultType="java.lang.String">
+        <![CDATA[
+           SELECT DISTINCT USER_ID
+           FROM &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+           WHERE USER_UID = #{user_uid}
+        ]]>
+    </select>
+
+</mapper>

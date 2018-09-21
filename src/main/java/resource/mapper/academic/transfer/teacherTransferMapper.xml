@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="teacherTransfer">	
+	<!--分页查询调动教师 ...-->
+	<select id="selectPaging" needPaging="true" parameterType="Map" resultType="Map">
+		<![CDATA[		
+		        select t.*,s.School_Name,ts.School_New_Adr,s.School_Short_Name  from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info as t
+				left join &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School as ts
+				on t.Teacher_Pk = ts.Teacher_Id 
+				left join &{framework.tmis.table.prefix['platform']}tbl_School_Info as s
+				on s.School_Code = ts.School_Code
+				where ts.state = '3'     
+		]]>       
+	</select>
+	
+	<!--导出调动教师 ...-->
+	<select id="selectImportPaging"  parameterType="Map" resultType="Map">
+		<![CDATA[		
+		        select t.*,s.School_Name,ts.School_New_Adr,s.School_Short_Name  from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info as t
+				left join &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School as ts
+				on t.Teacher_Pk = ts.Teacher_Id 
+				left join &{framework.tmis.table.prefix['platform']}tbl_School_Info as s
+				on s.School_Code = ts.School_Code
+				where ts.state = '3'  
+				order by Create_Time   
+		]]>       
+	</select>
+	
+	<!-- 查询所有学校 -->
+<!-- 	<select id="selectAllSchools" parameterType="Map"  resultType="Map">
+	  <if test="school_sequence == 0 || school_sequence == 1 || school_sequence == 4 || school_sequence == 5">
+		<![CDATA[
+		       select School_Code,School_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info
+		       where School_Type_Sequence = #{school_sequence}
+		]]>
+	  </if>
+	  <if test="school_sequence == 'gz'">
+		<![CDATA[
+		       select School_Code,School_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info
+		       where School_Type_Sequence = '2' or School_Type_Sequence = '3' or School_Type_Sequence = '4'
+		]]>
+	  </if>	  	       
+	</select> -->
+	
+		<!-- 查询所有学校 -->
+	<select id="selectAllSchools" parameterType="Map"  resultType="Map">
+		<![CDATA[
+		       select School_Code,School_Name,School_Short_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info
+		       where 1=1
+		]]>
+	  <if test="school_sequence!=null and school_sequence!=''">
+		 AND School_Type_Sequence = #{school_sequence}
+	  </if>
+	  <if test="school_sequence!=null and school_sequence!='' and schoolCode!=null and schoolCode!=''">
+		 AND School_Type_Sequence = #{school_sequence}
+		 AND School_Code = #{schoolCode}
+	  </if>	  
+	  <if test="school_sequence1!=null and school_sequence1!=''">
+		 AND School_Type_Sequence in('2','3','4')
+		 AND School_Code not in(#{schoolCode})
+	  </if>	  	       
+	</select>
+	
+	 <!--添加被调动老师与新学校的关联关系-->
+	<insert id="addrefTeacherSchool" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School
+			(Id,Teacher_Id,School_Code,state)
+			VALUES(#{id},#{teacherPk},#{school},'4')
+	    ]]>
+	</insert>
+	
+	<!-- 修改被调动老师在原学校的状态 state=2(调出) -->
+	<update id="updataTeacherState" parameterType="Map">
+		<![CDATA[
+			update &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School set state = '2' 
+			where Teacher_Id = #{teacherPk} and state = '3'
+		]]>
+	</update>
+	
+	<!--查询code校验教师是不是调回原校籍 -->
+	<select id="selectTeacherSchoolCode"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select School_Code from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info where Teacher_Pk = #{teacherPk}    
+		]]>       
+	</select>
+	
+	
+	<select id="getTeaSchoolByState" parameterType="String" resultType="String">
+	<![CDATA[
+		       select School_Code from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School where Teacher_Id = #{teacherPk}   
+		]]>   
+		<if test="state!=null and state!=''">
+		    and State=#{state}
+		</if>
+		<if test="notState!=null and notState!=''">
+		  and State =#{notState}
+		</if>
+	</select>
+	<!-- 删除该老师和其它学校的关系表数据 -->
+	<delete id="deleterefTeacherSchool"  parameterType="String">
+		<![CDATA[
+		      delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School where Teacher_Id = #{teacherPk} and state not in('0')
+		]]>       
+	</delete>
+	
+	 <!--添加一条状态为0的新数据-->
+	<insert id="insertStateRefTeacherSchool" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School
+			(Id,Teacher_Id,School_Code,state)
+			VALUES(#{id},#{teacherPk},#{schoolCode},'0')
+	    ]]>
+	</insert>
+	
+	<!-- 删除调动老师关联的科目 -->
+	<delete id="deleteRefTeaCourse"  parameterType="Map">
+		<![CDATA[
+		      delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course 
+		      where Teacher_Id = #{teacherPk} and Current_Year = #{currentYear}
+		]]>       
+	</delete>
+	
+	<!-- 删除调动老师关联的班级 -->
+	<delete id="deleteRefTeaClass"  parameterType="Map">
+		<![CDATA[
+		      delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class
+		      where Teacher_Id = #{teacherPk} and Current_Year = #{currentYear}
+		]]>       
+	</delete>
+	
+
+</mapper>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="examPaper">
+ 	 <!--添加试卷信息-->
+	<insert id="addExamPaper" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Exampaper_Manage
+			(Id,Exampaper_Name,School_Year,Term,Grade,Exam_Type,Course,Exampaper_Type,Create_Time,Create_Person)
+			VALUES(#{id},#{examPaperName},#{schoolYear},#{term},#{grade},#{examType},#{course},#{examPaperType},#{create_time},#{create_person})
+	    ]]>
+	</insert>
+	
+	<!--分页查询 -->
+	<select id="selectExamPaperPaging" needPaging="true" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select  * from &{framework.tmis.table.prefix['platform']}tbl_Exampaper_Manage 
+	    ]]>
+	    <where>
+	    	<if test="examPaperName!=null and examPaperName != ''">  
+	           AND Exampaper_Name like CONCAT('%',#{examPaperName},'%')
+	       	</if>
+	   	</where>
+	</select>
+	
+	<!-- 删除试卷 -->
+	<delete id="deleteExamPaper" parameterType="Map">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_Exampaper_Manage where Id in 
+	    ]]>
+	    <foreach collection="selArr" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	</delete>
+	
+	<!-- 根据id查询试卷-->
+	<select id="selectExamPaperById"  parameterType="Map" resultType="Map">
+    <![CDATA[
+        select  e.* from &{framework.tmis.table.prefix['platform']}tbl_Exampaper_Manage e 
+        where Id = #{id}
+    ]]>
+	</select>
+	
+	<!-- 修改考试 -->
+	<update id="UpdateExamPaperById" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_Exampaper_Manage
+		set Exampaper_Name=#{examPaperName},
+		School_Year=#{schoolYear},
+		Term=#{term},
+		Grade=#{grade},
+		Exam_Type=#{examType},
+		Course=#{course},
+		Exampaper_Type=#{examPaperType},
+		Update_Person=#{update_person},
+		Update_Time=#{update_time}
+		where id = #{id}
+    ]]>
+	</update>
+	
+</mapper>

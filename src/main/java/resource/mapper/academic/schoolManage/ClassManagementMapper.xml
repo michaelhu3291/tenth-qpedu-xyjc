@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="classManagement">	
+
+	<!-- 分页查询班级 -->
+	<select id="searchAllClassPaging" needPaging="true" parameterType="Map"
+		resultType="Map">
+		<![CDATA[
+		     select 
+		          Class_Name,Class_No,Class_Pk,Grade_No,Is_Xjb 
+		      from  
+		          &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+		]]>       
+		<where>
+		and 1=1
+		       AND School_Code = #{schoolCode} 
+		 <if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,Class_No) &gt;= #{minClassNo}
+			   AND convert(int,Class_No) &lt;= #{maxClassNo}
+		</if>
+	   	</where>
+	</select>
+	
+	<!-- 查询班级导出 -->
+	<select id="searchAllClassPagingImport"  parameterType="Map"
+		resultType="Map">
+		<![CDATA[
+		     select 
+		          Class_Name,Class_No,Class_Pk,Grade_No, (case Is_Xjb when '0' then '否' else '是' end) as Is_Xjb 
+		      from  
+		          &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+		]]>       
+		<where>
+		and 1=1
+		       AND School_Code = #{schoolCode} 
+		 <if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,Class_No) &gt;= #{minClassNo}
+			   AND convert(int,Class_No) &lt;= #{maxClassNo}
+		</if>
+	   	</where>
+	   	order by Grade_No,Class_No
+	</select>
+	
+	<!-- 修改班级是否为新疆班 -->
+	<update id="updateClassTypeByClassId" parameterType="Map">
+	  <![CDATA[
+	     update  &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+	     set Is_Xjb=#{isXjb}
+	     where Class_Pk 
+	      in 
+	  ]]>
+	   <foreach collection="classIdPk" index="index" item="item" open="(" separator="," close=")">
+		         #{item}
+	   </foreach>
+	</update>
+	
+	<!-- 得到某班级下面的所有学生 -->
+	<select id="searchStudentByClass" resultType="java.lang.String" parameterType="Map">
+		<![CDATA[
+		     select 
+		          Student_Id
+		      from  
+		          &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class
+		]]>       
+		<where>
+		and 1=1
+		       AND Class_Id = #{classId} 
+	   	</where>
+	</select>
+    
+    <!-- 得到某班级下面的所有学生 -->
+	<select id="getStuPkBySfzjh" resultType="java.lang.String" parameterType="java.lang.String">
+		<![CDATA[
+		     select 
+		          Stu_Pk
+		      from  
+		          &{framework.tmis.table.prefix['platform']}tbl_Student_Info
+		]]>       
+		<where>
+		and 1=1
+		       AND SFZJH = #{sfzjh} 
+	   	</where>
+	</select>
+	
+	
+	
+	<select id="getStudentByStuRefSchool" resultType="Map" parameterType="Map">
+		<![CDATA[
+		     select 
+		          Student_Id,School_Code,State
+		      from  
+		          &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School
+		]]>       
+		<where>
+		and 1=1
+		       AND Student_Id = #{studentPk} 
+		       AND School_Code=#{schoolCode}
+		       AND State &lt;&gt; '2'
+	   	</where>
+	</select>
+    
+</mapper>

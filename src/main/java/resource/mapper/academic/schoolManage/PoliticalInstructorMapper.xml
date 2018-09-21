@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="politicalInstructor">	
+		<!-- 分页查询 -->
+	<select id="selectPaging" needPaging="true" parameterType="Map" resultType="Map">
+		<![CDATA[
+		           SELECT * from &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+		            where ORG_ID=#{orgId} and POSITION_NO=2
+		]]> 
+       <if test="loginName!=''  || loginName!=null">
+           and USER_UID like CONCAT('%',#{loginName},'%' )
+       </if>     
+	</select>
+<!-- 添加教导员 -->
+	<insert id="insertPoliticalInstructor"  parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+                    (USER_ID,ORG_ID,USER_UID,USER_NAME,USER_FULL_NAME,
+                     USER_EMAIL,USER_EMAIL_PUBLIC,USER_PASSWD,USER_TYPE,USER_SEX
+                     ,USER_LOCKED,USER_SEQUENCE,CREATE_USER_NAME,CREATE_TIME,
+                     LAST_UPDATE_USER_NAME,LAST_UPDATE_TIME,VALIDITY_DATE
+                     ,RELATED_ACCOUNT,IDENTIFIER,POSITION_NO,COURSE,CREATE_NO,PERIOD)
+                     VALUES
+                     (#{id},#{orgId},#{loginName},#{name},NULL,
+                     '123@123.com','0','1',NULL,NULL,0,NULL,'admin',GETDATE(),NULL,
+                      NULL,NULL,NULL,'2','2',NULL,'2',NULL)
+	    ]]>
+	</insert>
+	<!-- 教导员赋予角色权限 -->
+	<insert id="addPoliticalInstructorRole"  parameterType="java.lang.String">
+	    <![CDATA[ 
+	                insert into  &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER 
+                    (ROLE_ID,USER_ID)
+                     VALUES
+                     ('9FC4C6BC-A3D6-4809-9CA3-AFDF0E810A50',#{userId});
+	    ]]>
+	</insert>
+
+	 <!-- 更新教导员 -->
+	<update id="updatePoliticalInstructor" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+	    set 
+	    USER_NAME=#{name},
+	    USER_UID=#{loginName},
+	    PERIOD=#{period}
+		where USER_ID = #{userId}
+    ]]>
+	</update>
+	
+	<!-- 根据id加载教导员 -->
+		   <select id="loadPoliticalInstructor"   parameterType="java.lang.String" resultType="Map">
+		      <![CDATA[
+		          select USER_ID,USER_NAME,USER_UID,PERIOD,COURSE from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		          where USER_ID=#{id}
+		      ]]>
+		   </select>
+		   <!-- 查询当前用户所属的机构id(根据登录名) -->
+	<select id="selectOrgIdByLoginName"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select ORG_ID from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		       where USER_UID=#{loginName}
+		]]>       
+	</select>
+	
+	 <!--根据用户id查询用户登录账号 -->
+	<select id="selectUserUidByUserId"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select USER_UID from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		       where USER_ID=#{userId}
+		]]>       
+	</select>
+	<!-- 根据当前教导员的学校code得到 学校简称-->
+	<select id="getSchoolShortNameBySchoolCode"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select School_Short_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+		       where School_Code=#{schoolCode}
+		]]>       
+	</select>
+	
+	
+	<!-- 得到教导员的平均分 -->
+	
+		<select id="getPoliticalInstructorAvg" parameterType="Map" 
+		resultType="Map">
+	     <![CDATA[
+               select 
+				 Class_Id ,
+				cast(round(AVG(case when  Exam_Type = 'qm' then Total_Score  end),2) as numeric(18,2)) as [qmAvg],
+				cast(round(AVG(case when  Exam_Type = 'qz' then Total_Score  end),2) as numeric(18,2)) as [qzAvg]
+				from &{framework.tmis.table.prefix['platform']}V_Course_Score  
+	   ]]>
+	   <where>
+	   		<if test="course != null and course != ''">
+	   			and Course=#{course}
+	   		</if>
+		    <if test="schoolYear != null and schoolYear != ''">
+	   			and School_Year=#{schoolYear}
+	   		</if>
+	   		<if test="term != null and term != ''">
+	   			and Term=#{term}
+	   		</if>
+	   		<if test="schoolType != null and schoolType != ''">
+	   			and School_Type=#{schoolType}
+	   		</if>
+	   		<if test="gradeId != null and gradeId != ''">
+	   			and Grade_Id=#{gradeId}
+	   		</if>
+	   		<if test="school != null and school != ''">
+	   			and School_Code=#{school}
+	   		</if>    
+	   </where>
+	   	GROUP BY Class_Id 
+	</select>
+
+
+
+<!-- 得到教研员对应学科的四率 -->
+	<!--  <select id="getPoliticalInstructorSiLv" parameterType="Map"
+		resultType="Map" statementType="CALLABLE">
+	 <![CDATA[
+	   {call &{framework.tmis.table.prefix['platform']}sp_jdySiLv(#{schoolYear},#{school},#{gradeId},#{term},#{examType},#{course},]]>
+	   		 <foreach collection="stateCodeList" index="index" item="item" open="(" separator="," close=")">     
+	  			#{item}
+	   		</foreach>
+	   		<foreach collection="stateCodeList" index="index" item="item" open="("  separator=","   close=")}">
+		   		#{item}
+		   	</foreach>
+		   	<foreach collection="stateCodeList" index="index" item="item"  separator=","    close=")}">
+		   		#{item}
+		    </foreach>
+	   <![CDATA[
+	   )}]]>
+	 
+	</select>-->
+	
+	<!-- 得到教研员对应学科的四率 -->
+	<select id="getPoliticalInstructorSiLv" parameterType="Map"
+		resultType="Map" statementType="CALLABLE">
+		 <![CDATA[
+		   	{call &{framework.tmis.table.prefix['platform']}sp_jdySiLv_copy(#{schoolYear},#{school},#{gradeId},#{term},#{examType},#{course},#{str},#{minClassNo},#{maxClassNo},#{c})}
+		   ]]>
+	</select>
+	
+	<!-- 根据登录名查询当前教研员所关联的年级 -->
+	<select id="selectGradesByLoginName" parameterType="String"
+		resultType="Map">
+		 <![CDATA[
+		   	select Grade from &{framework.tmis.table.prefix.bua['platform']}tbl_ref_Instractor_Grade where Login_Name = #{loginName}
+		   ]]>
+	</select>
+	
+</mapper>

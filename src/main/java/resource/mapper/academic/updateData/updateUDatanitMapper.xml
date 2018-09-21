@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="updateUnitData">
+	<!--添加教育单位 -->
+	<insert id="batchInsertUnit" parameterType="Map">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_School_Info
+				(id,School_Name,School_Code,School_Nature,DWDM,
+				School_Type_Sequence,School_Short_Name,Create_Time)
+		VALUES 
+				(NewID(),#{DWMC},#{DWH},#{DWBBM},#{DWDM},#{sequence},
+				 #{DWJC},GETDATE())
+		]]>
+	</insert>
+
+	<!-- 删除教育单位数据 -->
+	<delete id="batchDeleteUnit" parameterType="java.lang.String">    
+   		<![CDATA[
+  		  DELETE FROM  &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+  		  WHERE School_Code =#{DWH}    
+  	   ]]>
+	</delete>
+	<!-- 更新教育单位数据 -->
+	<update id="batchUpdateUnit" parameterType="Map">
+	   <![CDATA[
+				  update &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+				  set School_Name=#{DWMC} ,
+				      Update_Pk=#{updatePk},
+				      Update_Time=#{updateDate},
+				      School_Nature=#{DWBBM},
+				      DWDM=#{DWDM},
+				      School_Type_Sequence=#{sequence},
+				      School_Short_Name=#{School_Short_Name}
+				      WHERE School_Code =#{DWH}   
+				 ]]>
+	</update>
+	<!--同步更新接口教育单位数据 -->
+	<insert id="addUpdateSchools" parameterType="java.util.List">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_School_Info
+				(id,School_Name,School_Code,School_Nature,School_Type,
+				 DWDM,School_Type_Sequence,School_Short_Name,Create_Time,
+				 Update_Pk,Update_Type)
+		VALUES 
+		]]>
+		<foreach collection="list" index="index" item="item" separator=",">    
+  			( NewID(),#{item.DWMC},#{item.DWH},#{item.DWBBM},#{item.DWLBM},
+  			 #{item.DWDM},#{item.sequence},#{item.DWJC},GETDATE(),
+  			 #{item.updatePk},#{item.updateType})
+		</foreach>
+	</insert>
+</mapper>

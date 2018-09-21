@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="taskCenter">
+   <resultMap id="taskCenterMap" type="data.academic.taskCenter.entity.EntityTaskInfo">
+      <id property="id" column="id"/> 
+	  <result property="taskSource" column="TASK_SOURCE"/>
+	  <result property="appCode" column="APP_CODE"/>
+	  <result property="taskKindCode" column="TASK_KIND_CODE"/>
+	  <result property="clientTxSeq" column="CLIENT_TX_SEQ"/>
+	  <result property="creatorAccount" column="CREATOR_ACCOUNT"/>
+	  <result property="creator" column="CREATOR"/>
+	  <result property="orgCode" column="ORG_CODE"/>
+	  <result property="status" column="STATUS"/>
+	  <result property="signalLamp" column="SIGNAL_LAMP"/>
+	  <result property="tskLevel" column="TSKLEVEL"/>
+	  <result property="taskOperateMode" column="TASK_OPERATE_MODE"/>
+	  <result property="title" column="TITLE"/>
+	  <result property="actionUrl" column="ACTION_URL"/>
+	  <result property="taskStep" column="TASK_STEP"/>
+	  <result property="remindNow" column="REMIND_NOW"/>
+      <result property="remindNowSendTime" column="REMIND_NOW_SEND_TIME"/>
+      <result property="remindSender" column="REMIND_SENDER"/>
+      <result property="beginTime" column="BEGIN_TIME"/>
+      <result property="warningTime" column="WARNING_TIME"/>
+      <result property="endTime" column="END_TIME"/>
+      <result property="expireTime" column="EXPIRE_TIME"/>
+      <result property="finishedTime" column="FINISHED_TIME"/>
+      <result property="finishedRemindSendTime" column="FINISHED_REMIND_SEND_TIME"/>
+      <result property="createTime" column="CREATE_TIME"/>
+      <result property="lastUpdateTime" column="LAST_UPDATE_TIME"/>
+      <result property="remark" column="REMARK"/>
+      <result property="exfield" column="EXFIELD"/>
+      <result property="viewUrl" column="VIEWURL"/>
+      <result property="applyId" column="APPLY_ID"/>
+    </resultMap>
+   
+   <!-- 依据id查询待办任务信息-->
+	<select id="load" parameterType="java.lang.String" resultMap="taskCenterMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Task_Info  where id = #{id}
+    ]]>
+	</select>
+	
+   	<!-- 分页查询数据（代办任务）,STATUS:1 表示未完成 -->
+	<select id="selectAgencyTaskPaging" needPaging="true" parameterType="Map" resultMap="taskCenterMap">
+    <![CDATA[
+        select t.* from &{framework.tmis.table.prefix['platform']}tbl_Task_Info t  left join 
+        		 &{framework.tmis.table.prefix['platform']}tbl_Task_Receiver r  on t.id=r.TASK_ID
+        where t.STATUS=1 and r.RECEIVER_ACCOUNT=#{currentUserId}
+    ]]>
+    <if test="taskDistribute!=null and taskDistribute!=''">
+       AND t.TASK_KIND_CODE=#{taskDistribute}
+    </if>
+     <if test="dispatchTimeStart!=null and dispatchTimeStart!=''">
+       AND t.BEGIN_TIME &gt;= #{dispatchTimeStart}
+    </if>
+     <if test="dispatchTimeEnd!=null and dispatchTimeEnd!=''">
+       AND t.BEGIN_TIME &lt;= #{dispatchTimeEnd}
+    </if>
+     <if test="title!=null and title!=''">
+        AND t.TITLE like CONCAT('%',#{title},'%')
+     </if>
+	</select>
+	
+	<!--新增-->
+	<insert id="insertTaskCenter" parameterType="data.academic.taskCenter.entity.EntityTaskInfo">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Task_Info
+        (id,TASK_SOURCE,APP_CODE,TASK_KIND_CODE,CLIENT_TX_SEQ,CREATOR_ACCOUNT,CREATOR,ORG_CODE,STATUS,SIGNAL_LAMP,TSKLEVEL,TASK_OPERATE_MODE,TITLE,ACTION_URL,TASK_STEP,REMIND_NOW,REMIND_NOW_SEND_TIME,REMIND_SENDER,BEGIN_TIME,WARNING_TIME,END_TIME,EXPIRE_TIME,FINISHED_TIME,FINISHED_REMIND_SEND_TIME,CREATE_TIME,LAST_UPDATE_TIME,REMARK,EXFIELD,VIEWURL,APPLY_ID)
+		VALUES(#{id},#{taskSource},#{appCode},#{taskKindCode},#{clientTxSeq},#{creatorAccount},#{creator}, #{orgCode},#{status},#{signalLamp},#{tskLevel},#{taskOperateMode},#{title},#{actionUrl},#{taskStep}, #{remindNow},#{remindNowSendTime},#{remindSender},#{beginTime},#{warningTime},#{endTime},#{expireTime}, #{finishedTime},#{finishedRemindSendTime},#{createTime},#{lastUpdateTime},#{remark},#{exfield},#{viewUrl},#{applyId})
+    ]]>
+	</insert>
+	
+	<!--修改	-->
+	 <update id="updateTaskCenter" parameterType="data.academic.taskCenter.entity.EntityTaskInfo">
+	    <![CDATA[
+	   update &{framework.tmis.table.prefix['platform']}tbl_Task_Info
+		set TASK_SOURCE=#{taskSource},
+			APP_CODE=#{appCode},
+			TASK_KIND_CODE=#{taskKindCode},
+		    CLIENT_TX_SEQ=#{clientTxSeq},
+		    CREATOR_ACCOUNT=#{creatorAccount},
+		    CREATOR=#{creator},
+		    ORG_CODE=#{orgCode},
+		    STATUS=#{status},
+		    SIGNAL_LAMP=#{signalLamp},
+		    TSKLEVEL=#{tskLevel},
+		    TASK_OPERATE_MODE=#{taskOperateMode},
+		    TITLE=#{title},
+		    ACTION_URL=#{actionUrl},
+		    TASK_STEP=#{taskStep},
+		    REMIND_NOW=#{remindNow},
+		    REMIND_NOW_SEND_TIME=#{remindNowSendTime},
+		    REMIND_SENDER=#{remindSender},
+		    BEGIN_TIME=#{beginTime},
+		    WARNING_TIME=#{warningTime},
+		    END_TIME=#{endTime},
+		    EXPIRE_TIME=#{expireTime},
+		    FINISHED_TIME=#{finishedTime},
+		    FINISHED_REMIND_SEND_TIME=#{finishedRemindSendTime},
+		    CREATE_TIME=#{createTime},
+		    LAST_UPDATE_TIME=#{lastUpdateTime},
+		    REMARK=#{remark},
+		    EXFIELD=#{exfield},
+		    VIEWURL=#{viewUrl}
+		    where id = #{id}
+	     ]]>
+	 </update>	
+	 
+	<!-- 根据任务信息三方任务唯一标识获取任务信息。-->
+	<select id="loadTaskInfoByMarkedFlag" parameterType="java.lang.String" resultMap="taskCenterMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Task_Info  
+    ]]>
+	    <where>
+	    	CLIENT_TX_SEQ = #{clientTxSeq}
+	    	<if test="status!=null">
+	    		and status = #{status}
+	    	</if>
+	    </where>
+	</select>
+	
+	<!-- add by lidong -->
+	<!-- 根据任务信息三方任务唯一标识集合获取任务信息集合。-->
+	<select id="loadTaskInfoListByMarkedFlagList" parameterType="Map" resultMap="taskCenterMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Task_Info 
+    ]]>
+	<where>
+		CLIENT_TX_SEQ in
+		<foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+		 	#{item}
+		</foreach>
+		<if test="status!=null and status!=''">
+			and status = #{status}
+		</if>
+	</where>
+	
+	</select>
+	<!-- end by lidong -->
+	 
+	<!--根据任务信息三方任务唯一标识 删除任务信息-->
+	<delete id="deleteTaskInfoByMarkedFlag">
+	<![CDATA[
+		    delete from &{framework.tmis.table.prefix['platform']}tbl_Task_Info  where CLIENT_TX_SEQ in 
+		]]>
+	<foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+	 #{item}
+	</foreach>
+	</delete>
+	
+	<!-- 任务信息分类统计-->
+	<select id="selectTaskCountsByTaskKindCode"  resultType="Map">
+    <![CDATA[
+      select count(*) as taskCounts,TASK_KIND_CODE from (
+        select t.* from &{framework.tmis.table.prefix['platform']}tbl_Task_Info t  left join 
+        		 &{framework.tmis.table.prefix['platform']}tbl_Task_Receiver r  on t.id=r.TASK_ID
+        where t.STATUS=1 and r.RECEIVER_ACCOUNT=#{currentUserId})  y  group by TASK_KIND_CODE
+    ]]>
+	</select>
+	
+	<!--根据第三方id 和 所属用户id 来定位 taskId -->
+	<select id="selectTaskInfoByThirdInfoIdAndBelongUserId"  resultMap="taskCenterMap">
+    <![CDATA[
+       select t.* from &{framework.tmis.table.prefix['platform']}tbl_Task_Info t  left join 
+        		 &{framework.tmis.table.prefix['platform']}tbl_Task_Receiver r  on t.id=r.TASK_ID
+        where t.STATUS=1 and r.RECEIVER_ACCOUNT=#{currentUserId} and t.CLIENT_TX_SEQ=#{clientTxSeq}
+    ]]>
+	</select>
+	
+	<!-- 查询所有代办任务数据,STATUS:1 表示未完成(待办) -->
+	<select id="selectAllAgencyMissions" parameterType="Map" resultMap="taskCenterMap">
+    <![CDATA[
+          select t.* from &{framework.tmis.table.prefix['platform']}tbl_Task_Info t 
+        		left join &{framework.tmis.table.prefix['platform']}tbl_Task_Receiver r  on t.id=r.TASK_ID
+				left join &{framework.tmis.table.prefix['platform']}tbl_WorkFlow_Request as wr on t.CLIENT_TX_SEQ = wr.id
+				where t.STATUS=1 and (r.RECEIVER_ACCOUNT = #{currentUserId}
+				or r.RECEIVER_ACCOUNT in
+				(select a1.PrincipalUserID from &{framework.tmis.table.prefix['platform']}tbl_WorkFlow_Agent as a1      
+				where a1.AgentUserID = #{currentUserId} and a1.Status = 'Agent'     
+				and wr.WorkFlowID = a1.WorkflowID)     )         
+				order by t.CREATE_TIME desc
+    ]]>
+	</select>
+	
+</mapper>

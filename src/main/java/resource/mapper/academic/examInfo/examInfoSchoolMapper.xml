@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="examInfoSchool">
+
+
+<!-- 根据学校code和年级得到班级 -->
+<select id="getClassBySchoolAndGrade" parameterType="Map" resultType="Map">
+   <![CDATA[
+      select 
+      	Class_Name,Class_Pk,Class_No,Grade_No as Class_Id 
+      from 
+      	&{framework.tmis.table.prefix['platform']}tbl_Class_Info 
+   ]]>
+   <where>
+       	School_Code=#{schoolCode}
+        and Grade_No=#{gradeId}
+        and Class_No  &lt;&gt; ''
+        <if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,Class_No) &gt;= #{minClassNo}
+			   AND convert(int,Class_No) &lt;= #{maxClassNo}
+		</if>
+   </where>
+     ORDER BY Class_No
+</select> 
+
+<!-- 学校发布的考试相关的班级和科目 -->
+<insert id="addExamCalssCourse" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course
+			(Id,Exam_Code,
+			Class_Id,
+			Course,
+			Create_Person,
+			Create_Time,
+			Course_Start_Time,
+			Course_End_Time,
+			Course_Exam_Time,
+			Marking_Time,
+			Marking_Place,
+			Exam_Length,
+			SortNumber,
+			Marking_Start_Time,
+			Marking_End_Time,
+			Marking_End_Date,
+			Course_Exam_Type,
+			Exam_Zf,
+			Exam_Yx,
+			Exam_Lh,
+			Exam_Jg
+			)
+			VALUES
+			(#{id},
+			#{examCode},
+			#{classId},
+			#{course},
+			#{createPerson},
+			#{createTime},
+			#{courseStartTime},
+			#{courseEndTime},
+			#{courseExamTime},
+			#{markingTime},
+			#{markingPlace},
+			#{examLength},
+			#{sortNumber},
+			#{markingStartTime},
+			#{markingEndTime},
+			#{markingEndDate},
+			#{courseExamType},
+			#{zf},
+			#{yx},
+			#{lh},
+			#{jg}
+			)
+	    ]]>
+	</insert>
+	
+	<!-- 得到学校发布的考试的编号的流水号的最大值 -->
+	<select id="getExamNumberByNotSchoolCode"  parameterType="java.lang.String" resultType="java.lang.String">
+		<![CDATA[
+		         select max(RIGHT(Exam_Number,4)) as Exam_Number from &{framework.tmis.table.prefix['platform']}tbl_Exam_Info
+		]]>   
+		<where>
+		    School_Code    &lt;&gt;   #{schoolCode}
+		</where>
+	</select>
+	<!-- 根据考试编号删除相关的班级和科目 -->
+	<delete id="deleteCourseClassByExamCode">
+	<![CDATA[
+	 delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course 
+	]]>
+	<where>
+	    <if test="examCode!=null || examCode.size>0">
+	       Exam_Code in  
+	       <foreach collection="examCode" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	    </if>
+	    </where>
+	</delete>
+	
+	<!-- 根据考试编号的到相关的班级 -->
+	<select id="getClassIdByExamCode" resultType="Map" parameterType="java.lang.String">
+	    <![CDATA[
+	        select distinct Class_Id  from &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course 
+	        where Exam_Code=#{examCode}
+	    ]]>
+	 </select>
+	 <!-- 根据学校code和班级得到相关科目 -->
+	 <select id="getCourserByExamCodeAndClass" resultType="Map" parameterType="Map">
+	    <![CDATA[
+	       SELECT  distinct Course,SortNumber from 
+	      &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course where 
+	       Exam_Code=#{examCode} 
+	    ]]>
+	    <if test="classIdList.size>0  and  classIdList!=null"> 
+	     and Class_Id IN
+	       <foreach collection="classIdList" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	    </if>
+	     order by SortNumber
+	 </select>
+	 
+	
+	 <!-- 根据考试编号得到科目-->
+  	<select id="selectCoursesByExamCode"   parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+      SELECT  
+      distinct Course,Course_Start_Time,Course_End_Time,Course_Exam_Time,
+      Marking_Time,Marking_Place,Exam_Length,SortNumber,Marking_Start_Time,
+	  Marking_End_Time,Marking_End_Date,Course_Exam_Type 
+      from 
+	      &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course 
+    ]]>
+    <where>
+      and 1=1
+        <if test="examCode!='' and examCode!=null" >
+          and  Exam_Code=#{examCode} 
+        </if>
+    </where>
+    order by SortNumber
+    </select>
+    
+	
+	<!-- 根据考试编号修改学科 -->
+<update id="updateExamRefCourseByExamCodeAndCourse" parameterType="Map">
+ <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course
+		set Course=''
+		where Exam_Code= #{examCode}
+		and Course=#{course}
+    ]]>
+</update>
+	
+	<!-- 得到某次考试下面的科目考试的开始时间和结束时间 -->
+	<select id="getCourseStartTimeAndEndTime" parameterType="Map" resultType="Map">
+	  <![CDATA[
+	  	 SELECT  
+    		 convert(varchar(10),min(Course_Exam_Time),126) as startTime,
+    		 convert(varchar(10),max(Course_Exam_Time),126) as endTime
+  			from 
+  			&{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course
+  			where Exam_Code=#{examCode}
+	  ]]>
+	</select>
+	
+	<!-- 得到考试的分数段 -->
+	<select id="searchScoreSegement" parameterType="Map" resultType="Integer">
+	  <![CDATA[
+	  	 SELECT * from(
+			SELECT   Cast(P.DictionaryName as int) as score  FROM &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary P
+			WHERE P.id=#{scoreDictionaryName} 
+			UNION 
+			SELECT Cast(C.DictionaryName as int) as score FROM &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary C
+			WHERE C.ParentDictionary=#{scoreDictionaryName}
+			)m
+			ORDER BY  m.score 
+	  ]]>
+	</select>
+	<!-- 根据班级pk得到班级信息-->  
+	<select id="getClassInfoByClassPk" resultType="Map" parameterType="java.lang.String">
+	 <![CDATA[
+	   SELECT * FROM &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+	   WHERE Class_Pk =#{classId}
+	 ]]>
+	</select>
+</mapper>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="gradeRefTeacher">
+
+	<!-- 得到当前教师所在的年级 -->
+	<select id="getGradeByTeaId" parameterType="java.lang.String"
+		resultType="Map">
+	     <![CDATA[
+	     
+	                select rts.Grade_Id,tsi.Grade_Name from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Grade rts 
+                    left join &{framework.tmis.table.prefix['platform']}tbl_Grade_Info  tsi
+                    on rts.Grade_Id=tsi.id
+                    where  
+                    Teacher_Id =#{id}
+         ]]>
+	</select>
+	<!-- 删除当前老师所在的年级 -->
+	<delete id="deleteGradeByTeaId">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Grade where Teacher_Id = #{id}
+    ]]>
+	</delete>
+	<!-- 添加年级 -->
+	<insert id="teaReGrade" parameterType="java.lang.String">
+		<selectKey resultType="java.lang.String" keyProperty="id"
+			order="BEFORE">
+			SELECT NewID()
+		</selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Grade
+		(id,Teacher_Id,Grade_Id)
+		VALUES(#{id},#{teacherId},#{gradeId})  
+    ]]>
+	</insert>
+
+
+	<!-- 得到年级 -->
+	<select id="getGrade" parameterType="java.lang.String"
+		resultType="Map">
+		<![CDATA[
+		          select * from &{framework.tmis.table.prefix['platform']}tbl_Grade_Info 
+		]]>
+		<where>
+			<if test="ids.size>0">
+				id not in
+				<foreach collection="ids" index="index" item="item" open="("
+					separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+		
+		</where>
+	</select>
+
+	<!-- 根据教师id和学校类型得到当前教师所在的年级 -->
+	<select id="getGradeByTeaIdAndSchoolCode" parameterType="java.lang.String"
+		resultType="Map">
+	     <![CDATA[
+	                    select distinct tgj.Grade_Name,trtg.Grade_Id,tgj.School_Type
+                        from tbl_Grade_Info tgj 
+                        INNER JOIN tbl_ref_Teacher_Grade trtg
+                        on tgj.id=trtg.Grade_Id
+                        where
+                        trtg.Teacher_Id =#{id} and tgj.School_Type=#{schoopType}
+         ]]>
+	</select>
+ 
+</mapper>

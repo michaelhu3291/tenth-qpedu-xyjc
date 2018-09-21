@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="districtSubjectInstructor">
+
+	<!-- 分页查询成绩 -->
+	<select id="getCourseScoreByCourse" needPaging="true"
+		parameterType="Map" resultType="Map">
+	     <![CDATA[
+	 	 SELECT * from  &{framework.tmis.table.prefix['platform']}V_Score_Data
+	    ]]>
+
+		<where>
+			<if test="schoolYear!=null and schoolYear!=''">
+				School_Year=#{schoolYear}
+			</if>
+			<if test="term!=null and term!=''">
+				AND Term=#{term}
+			</if>
+			<if test="examType!=null and examType!=''">
+				AND Exam_Type=#{examType}
+			</if>
+			<if test="schoolType!=null and schoolType!=''">
+				AND School_Type=#{schoolType}
+			</if>
+			<if test="grade!=null and grade!=''">
+				AND Grade_Id=#{grade}
+			</if>
+			<if test="school!=null and school.size>0">
+				AND School_Code in
+				<foreach collection="school" index="index" item="item" open="("
+					separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+
+	</select>
+
+
+	<!-- <select id="getAvg" parameterType="java.lang.String" resultType="Map"> 
+		<![CDATA[ select avg(Total_Score) as avg,School_Type,School_Name from &{framework.tmis.table.prefix['platform']}V_Course_Score 
+		where Course=#{course} GROUP BY School_Type,School_Name ]]> </select> -->
+<!--根据学科code 得到学科 -->
+	<select id="getCourseByCouserCode" parameterType="java.lang.String"
+		resultType="Map">
+	     <![CDATA[
+	           select  Course_Name,Course_Code from
+	         &{framework.tmis.table.prefix['platform']}tbl_Course_Info
+          where Course_Code=#{courseCode}
+	   ]]>
+	</select>
+
+<!-- 根据登录名得到科目code -->
+	<select id="getCourseByLoginName" parameterType="java.lang.String"
+		resultType="Map">
+	     <![CDATA[
+            select COURSE from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		    where USER_UID=#{loginName}
+	   ]]>
+	</select>
+
+<!-- 得到教研员对应学科的平均分 -->
+	<select id="getSubjectInstrutorAvg" parameterType="Map"
+		resultType="Map" statementType="CALLABLE">
+	 <![CDATA[
+	    {call &{framework.tmis.table.prefix['platform']}sp_subjectInstructor
+	    (#{schoolYear},#{term},#{examType},#{course},#{schoolType})
+	    }
+	   ]]>
+	</select>
+	
+		<select id="getSubjectInstrutorsAvg" parameterType="Map" 
+		resultType="Map">
+	     <![CDATA[
+                select 
+				School_Name ,
+				cast(round(AVG(case when  Exam_Type = 'qm' then Total_Score  end),2) as numeric(18,2)) as [qmAvg],
+				cast(round(AVG(case when  Exam_Type = 'qz' then Total_Score  end),2) as numeric(18,2)) as [qzAvg]
+				from &{framework.tmis.table.prefix['platform']}V_Course_Score  
+	   ]]>
+	   <where>
+	       Course=#{course}
+	      and School_Year=#{schoolYear}
+	      and Term=#{term}
+	      and School_Type=#{schoolType}
+	     
+	   </where>
+	   	GROUP BY School_Name 
+	</select>
+
+<!-- 得到教研员对应学科的四率 -->
+	<select id="getSubjectInstrutorSiLv" parameterType="Map"
+		resultType="Map" statementType="CALLABLE">
+	 <![CDATA[
+	   {call &{framework.tmis.table.prefix['platform']}sp_dksl(#{schoolYear},#{term},#{examType},#{course})}
+	 ]]>
+	</select>
+
+<!-- 得到教研员对应学科的四率 -->
+	<select id="getSubjectInstrutorsSiLv" parameterType="Map"
+		resultType="Map" statementType="CALLABLE">
+	 <![CDATA[
+	   {call &{framework.tmis.table.prefix['platform']}sp_dkJyySiLv(#{schoolYear},#{term},#{examType},#{course},#{grade},#{state},#{c})}
+	 ]]>
+	</select>
+</mapper>

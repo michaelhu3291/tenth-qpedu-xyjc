@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="updateTeaData">
+	<!-- 批量添加教师 -->
+	<insert id="batchInsertTeacher" parameterType="Map">
+    <![CDATA[
+   			INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info
+					(id,Teacher_Name,Login_Name,Teacher_Pk,Create_Time,School_Code,Update_Pk)
+			VALUES 
+					(NewID(),#{XM},#{loginName},#{PK},GETDATE(),#{pkSchool},
+					 #{updatePk})
+		]]>
+	</insert>
+ 
+	<!-- 批量删除老师数据 -->
+	<delete id="batchDeleteTeacher" parameterType="java.lang.String">    
+  		 <![CDATA[
+    		DELETE FROM  &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info
+    		WHERE Teacher_Pk =#{PK}
+     	]]>  
+	</delete>   
+	<!-- 批量更新教师数据 -->
+	 <update id="batchUpdateTeacher"  parameterType="Map">
+	   <![CDATA[
+				  update &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info 
+				  set 	Teacher_Name=#{XM} ,
+				        School_Code=#{pkSchool},
+				        Login_Name=#{loginName},
+				        Update_Time=#{updateDate},
+				        Update_pk=#{updatePk}
+				        WHERE Teacher_Pk = #{PK}
+				 ]]> 
+    </update>
+    
+    <!--同步更新接口数据  -->
+    <insert id="addUpdateTeachers" parameterType="java.util.List">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info
+				(id,Teacher_Name,Login_Name,Teacher_Pk,Create_Time,
+				 School_Code,Update_Pk,Update_Type)
+		VALUES 
+		]]>
+		<foreach collection="list" index="index" item="item"  separator=",">    
+  			( NewID(),#{item.XM},#{item.loginName},#{item.PK},
+  			GETDATE(),#{item.pkSchool},#{item.updatePk},#{item.updateType})
+		</foreach>
+	</insert>
+</mapper>

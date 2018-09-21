@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="courseRefStu">	
+
+	  <!-- 得到拥有的科目-->
+	<select id="getHasCourseList"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+	       where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode='gz')
+	    ]]>
+	      and Remark = 'course' 
+	       <if test="courseCodeList.size>0">
+		  and  DictionaryCode  in
+		     <foreach collection="courseCodeList" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+		  </if>
+	       order by SortNumber ASC
+	</select>
+	
+	<select id="getCourseList"  parameterType="String" resultType="Map">
+	    <![CDATA[
+	       select DictionaryCode,DictionaryName from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+	       where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode='gz')
+	    ]]>
+	      and Remark = 'course' 
+	       <if test="courseCodeList.size>0">
+		  and  DictionaryCode not in
+		     <foreach collection="courseCodeList" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   		     </foreach>
+		  </if>
+	       order by SortNumber ASC
+	</select>
+	
+	<!-- 根据科目code得到科目 -->
+	<select id="getCourseByCourseCode" parameterType="java.lang.String" resultType="java.lang.String">
+	     <![CDATA[
+	       select DictionaryName from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+	       where ParentDictionary=(select id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where DictionaryCode='gz')
+	    ]]>
+	      and Remark = 'course' 
+		  and  DictionaryCode =#{courseCode}
+	      order by SortNumber ASC
+	</select>
+	<!-- 根据学校code得到学校类型标识 -->
+	<select id="getSequenceBySchoolCode" parameterType="java.lang.String" resultType="java.lang.String">
+	     <![CDATA[
+	       select School_Type_Sequence from &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+	       where School_Code=#{schoolCode}
+	    ]]>
+	</select>
+	<!-- 根据学籍号得到科目 -->
+	<select id="getCourseByXjfh" parameterType="java.lang.String" resultType="Map">
+	     <![CDATA[
+	     
+	                select Course from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse rts 
+                    where  
+                    XJFH =#{xjfh}
+         ]]> 
+	</select>
+
+
+		<select id="getCousresByXjfh" parameterType="Map" resultType="Map">
+		     <![CDATA[
+				      select DISTINCT tci.Course_Name 
+				      from 
+						&{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse rts 
+					  INNER JOIN &{framework.tmis.table.prefix['platform']}tbl_Course_Info tci 
+					  on rts.Course=tci.Course_Code 
+					  where  
+                    SFZJH =#{sfzjh}
+		     ]]>
+		</select>
+	 <delete id="deleteCourseByXjfh">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse 
+        where SFZJH  in 
+    ]]>
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">     
+  			    #{item}
+   	</foreach>
+	</delete>
+	<!-- 添加科目 -->
+	<insert id="stuReCourse" parameterType="java.lang.String">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse
+		(id,SFZJH,Course)
+		VALUES(#{id},#{sfzjh},#{course})  
+    ]]>
+	</insert>
+</mapper>

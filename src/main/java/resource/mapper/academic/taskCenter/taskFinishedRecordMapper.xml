@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+                  
+<mapper namespace="taskFinishedRecord">
+  <resultMap id="taskFinishedRecordMap" type="data.academic.taskCenter.entity.EntityTaskFinishedRecordInfo">
+     <id property="id" column="id"/>  
+     <result property="userAccount" column="UserAccount"/>
+     <result property="taskId" column="TASK_ID"/>
+	 <result property="receiverAccount" column="RECEIVER_ACCOUNT"/>
+	 <result property="receiver" column="RECEIVER"/>
+	 <result property="orgCode" column="ORG_CODE"/>
+	 <result property="signalLamp" column="SIGNAL_LAMP"/>
+	 <result property="finishedTime" column="FINISHED_TIME"/>
+	 <result property="remindSenderSendTime" column="REMIND_SENDER_SEND_TIME"/>
+		<result property="remindSenderSendTime" column="CREATE_TIME" />
+   </resultMap>
+   
+	<insert id="insertTaskFinishedRecord" parameterType="data.academic.taskCenter.entity.EntityTaskFinishedRecordInfo">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Task_Finished_Record
+        (id,TASK_ID,RECEIVER_ACCOUNT,RECEIVER,ORG_CODE,SIGNAL_LAMP,FINISHED_TIME,REMIND_SENDER_SEND_TIME)
+		VALUES(#{id},#{taskId},#{receiverAccount},#{receiver},#{orgCode},#{signalLamp},#{finishedTime},#{remindSenderSendTime})
+    ]]>
+	</insert>
+	
+	 <update id="updateTaskFinishedRecord" parameterType="data.academic.taskCenter.entity.EntityTaskFinishedRecordInfo">
+	    <![CDATA[
+	   update &{framework.tmis.table.prefix['platform']}tbl_Task_Finished_Record
+		set TASK_ID=#{taskId},
+			RECEIVER_ACCOUNT=#{receiverAccount},
+			RECEIVER=#{receiver},
+			ORG_CODE=#{orgCode},
+			SIGNAL_LAMP=#{signalLamp},
+			FINISHED_TIME=#{finishedTime},
+			REMIND_SENDER_SEND_TIME=#{remindSenderSendTime}
+		    where id = #{id}
+	     ]]>
+	 </update>	
+	
+	<!-- 分页查询数据（已办任务） -->
+	<select id="selectHandledTaskPaging" needPaging="true" parameterType="Map" resultType="Map">
+    <![CDATA[
+        select fr.*,i.TITLE as titleName,i.TASK_STEP as taskStep,i.REMIND_SENDER as taskSender,
+        i.REMIND_NOW_SEND_TIME as taskSendDate,i.CREATOR as creater,i.TASK_KIND_CODE,i.CREATE_TIME as createTime,i.APP_CODE as appCode
+          from &{framework.tmis.table.prefix['platform']}tbl_Task_Finished_Record fr left join
+       			 &{framework.tmis.table.prefix['platform']}tbl_Task_Info i on fr.TASK_ID=i.id
+       			 where 1=1 and fr.RECEIVER_ACCOUNT=#{currentUserId}
+    ]]>
+     <if test="taskDistribute!=null and taskDistribute!=''">
+      AND i.TASK_KIND_CODE=#{taskDistribute}
+    </if>
+    <if test="dispatchTimeStart!=null and dispatchTimeStart!=''">
+      AND i.CREATE_TIME &gt;= #{dispatchTimeStart}
+    </if>
+     <if test="dispatchTimeEnd!=null and dispatchTimeEnd!=''">
+      AND i.CREATE_TIME &lt;= #{dispatchTimeEnd}
+    </if>
+     <if test="title!=null and title!=''">
+        AND i.TITLE like CONCAT('%',#{title},'%')
+     </if>
+    	<!-- <if test="taskType!=null and taskType!=''">
+           AND RoleName like CONCAT('%',#{taskType},'%')
+       	</if>
+       	<if test="taskStep!=null and taskStep!=''">
+           AND Status = #{taskStep} 
+       	</if> -->
+	</select>
+	
+	<!--根据任务信息id 来删除完成的任务信息-->
+	<delete id="deleteCompletedTaskInfoByTaskId">
+	<![CDATA[
+		    delete from &{framework.tmis.table.prefix['platform']}tbl_Task_Finished_Record  where TASK_ID in 
+		]]>
+	<foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+	 #{item}
+	</foreach>
+	</delete>
+	
+	<!-- 任务信息分类统计（已办任务） -->
+	<select id="selectCompletedTaskCountsByTaskKindCode" resultType="Map">
+    <![CDATA[
+      select count(*) as completeTaskCounts, y.TASK_KIND_CODE from (
+        select fr.*,i.TITLE as titleName,i.TASK_STEP as taskStep,i.REMIND_SENDER as taskSender,
+        i.REMIND_NOW_SEND_TIME as taskSendDate,i.CREATOR as creater,i.TASK_KIND_CODE,i.CREATE_TIME
+          from &{framework.tmis.table.prefix['platform']}tbl_Task_Finished_Record fr left join
+       			 &{framework.tmis.table.prefix['platform']}tbl_Task_Info i on fr.TASK_ID=i.id
+       			 where 1=1 and fr.RECEIVER_ACCOUNT=#{currentUserId}) y group by y.TASK_KIND_CODE
+    ]]>
+    </select>
+    
+    <!-- 查询所有已办任务数据-->
+	<select id="selectAllHandledMissions"  parameterType="Map" resultType="Map">
+    <![CDATA[
+        select fr.*,i.TITLE as titleName,i.TASK_STEP as taskStep,i.REMIND_SENDER as taskSender,
+        i.REMIND_NOW_SEND_TIME as taskSendDate,i.CREATOR as creater,i.TASK_KIND_CODE,i.CREATE_TIME
+          from &{framework.tmis.table.prefix['platform']}tbl_Task_Finished_Record fr left join
+       			 &{framework.tmis.table.prefix['platform']}tbl_Task_Info i on fr.TASK_ID=i.id
+       			 where 1=1 and fr.RECEIVER_ACCOUNT=#{currentUserId} order by fr.FINISHED_TIME desc
+    ]]>
+	</select>
+</mapper>

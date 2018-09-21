@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<properties>
+		<property name="framework.locale.default">zh_CN</property>
+		<property name="framework.theme.default">default</property>
+		<property name="framework.web.charset">UTF-8</property>
+		<property name="framework.encrypt.encode">MD5</property>
+		<property name="framework.web.upload.path">upload</property>
+		<!-- 上传文件路径 -->
+		<property name="framework.web.upload.file_path">D:\academic\upload</property>
+		<!-- 统一授权服务地址(配置ip地址) -->
+		<property name="framework.web.http.path">http://127.0.0.1:8080/bua/</property>
+		<!-- 青浦接口地址 -->
+		<property name="framework.web.academic.https.path">https://cent.qpedu.cn/service/oAuth/api/</property>
+		<!-- 应用唯一标识 -->
+		<property name="academic.appid">88fd491bc0584fef8d887e267391ab10</property>
+		<!-- 应用密钥 -->
+		<property name="academic.secret">xyzl2016</property>
+		<!-- <property name="academic.secret">zljc_2016</property> -->
+		<!-- 证书类型 -->
+		<property name="academic.grant_type">client_credential</property>
+		<!-- 获取accessToken -->
+		<property name="academic.accessToken">accessToken</property>
+		<!-- 数据更新的类型 -->
+		<property name="academic.student">student</property>
+		<property name="academic.teacher">teacher</property>
+		<property name="academic.unit">unit</property>
+        
+        <property name="builderPath">http://apache.org/xml/features/nonvalidating/load-external-dtd</property>
+
+
+		<!-- 科目表中 学科的父id -->
+		<property name="academic.courseIdXx">ff8080811c9875e7011c9892bd0d000b</property>
+		<property name="academic.courseIdCz">ff8080811c9875e7011c9892deca000c</property>
+		<property name="academic.courseIdGz">ff8080811c98a246011c98c68baa0006</property>
+		<property name="syzxSchoolCode">3008</property><!--实验中学学校code  -->
+		<property name="syzxAdmin">1210011</property><!--实验中学管理员  -->
+		<property name="yczxSchoolCode">3062</property><!--豫才中学学校code  -->
+		<property name="yczxAdmin">1210012</property><!--豫才中学管理员  -->
+		<property name="yczxSchoolName">豫才中学</property><!-- 豫才中学名称 -->
+		<property name="qpyzSchoolCode">3004</property><!-- 青浦一中学校code -->
+		<!-- 教师角色id -->
+		<property name="academic.teacherRoleId">E3728B14-DFBE-41F3-AB03-77F10D6A0AF0</property>
+		<!-- 学生角色id -->
+		<property name="academic.studentRoleId">83CAAFFA-4230-4067-9E79-2B3C903FF662</property>
+		<!-- 根据状态码加载的页面 -->
+		<property name="academic.401">/academic/401.html</property>
+
+	</properties>
+
+	<maps>
+		<map name="framework.tmis.table.prefix">
+			<entry key="scheduler">qingpu_quality.dbo.SCHEDULE_</entry>
+			<entry key="platform">qingpu_quality.dbo.</entry>
+		</map>
+
+		<map name="framework.tmis.table.prefix.bua">
+			<entry key="scheduler">qingpu_academic_bua.dbo.SCHEDULE_</entry>
+			<entry key="platform">qingpu_academic_bua.dbo.</entry>
+		</map>
+		<!-- 科目表中 小学 初中 高中 的id -->
+		<map name="framework.tmis.course">
+			<entry key="courseIdXx">'ff8080811c9875e7011c9892bd0d000b'</entry>
+			<entry key="courseIdCz">'ff8080811c9875e7011c9892deca000c'</entry>
+			<entry key="courseIdGz">'ff8080811c98a246011c98c68baa0006'</entry>
+		</map>
+		<!-- 区级管理员、教研员角色code -->
+		<map name="framework.tmis.roleCode">
+			<entry key="qpRoleCode">qpAdmin,instructor</entry>
+			<entry key="qpRoleAdminCode">qpAdmin</entry>
+			<entry key="qpOrgCode">3026</entry>
+			<entry key="qpOrgId">FBF46778-3AB6-4A34-8698-3E1A67149AC4</entry>
+		</map>
+		<map name="framework.data.properties">
+			<entry key="dialet">ORACLE</entry>
+			<entry key="driver">com.microsoft.sqlserver.jdbc.SQLServerDriver</entry>
+			<!-- FIXME academic-数据库 -->
+			<entry key="driverUrl">jdbc:sqlserver://127.0.0.1:1433;SelectMethod=cursor;</entry>
+			<!-- <entry key="driverUrl">jdbc:sqlserver://192.168.6.10:1433;SelectMethod=cursor;</entry> -->
+			<entry key="user">sa</entry>
+			<entry key="password">zxc123%#</entry>
+			<entry key="keepSql">select CURRENT_TIMESTAMP</entry>
+		</map>
+
+		<map name="framework.data.source">
+			<entry key="proxool.minimum-connection-count">5</entry>
+			<entry key="proxool.maximum-connection-count">100</entry>
+			<entry key="proxool.prototype-count">5</entry>
+			<entry key="proxool.simultaneous-build-throttle">20</entry>
+			<entry key="proxool.maximum-connection-lifetime">14400000</entry>
+			<entry key="proxool.maximum-active-time">300000</entry>
+		</map>
+
+		<!-- 人员调动历史记录角色标识（0-学生，1-老师） -->
+		<map name="framework.tmis.transfer">
+			<entry key="studentHistory">0</entry>
+			<entry key="teacherHistory">1</entry>
+		</map>
+
+		<map name="framework.academic.default.setup">
+			<entry key="appId">63594C80-63AA-4725-BFF5-1FDB61380D11</entry>
+			<entry key="sysCode">academic</entry>
+			<entry key="sysPasswd">123456</entry>
+		</map>
+
+		<map name="framework.implements.map">
+			<entry key="dataSerializer">dataSerializerJacksonImpl</entry>
+			<entry key="scheduler">schedulerQuartzImpl</entry>
+		</map>
+	</maps>
+</configuration>

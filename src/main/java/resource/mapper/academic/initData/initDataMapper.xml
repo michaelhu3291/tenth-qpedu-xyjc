@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="initData">
+	<!-- 批量插入添加教师 -->
+	<insert id="addTeachers" parameterType="java.util.List">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info
+				(id,Teacher_Name,Login_Name,Teacher_Pk,Create_Time,School_Code)
+		VALUES 
+		]]>
+		<foreach collection="list" index="index" item="item"
+			separator=",">
+			( NewID(),#{item.XM},#{item.loginName},#{item.PK},GETDATE(),
+			#{item.pkSchool} )
+		</foreach>
+	</insert>
+
+	<!-- 批量删除老师数据 -->
+	<delete id="deleteTeacher">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info
+    ]]>
+	</delete>
+
+
+	<!-- 往教师学校关系表批量插入学校code ,老师pkId -->
+	<insert id="insertTeaRefSchool" parameterType="java.util.List">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School
+				(id,Teacher_Id,School_Code,state)
+		VALUES 
+		]]>
+		<foreach collection="list" index="index" item="item"
+			separator=",">
+			( NewID(),#{item.PK},#{item.pkSchool},'0')
+		</foreach>
+	</insert>
+
+
+
+	<!-- 批量插入同步教育单位数据 -->
+	<insert id="addSchools" parameterType="java.util.List">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_School_Info
+				(id,School_Name,School_Code,School_Nature,School_Type,DWDM,School_Type_Sequence,School_Short_Name,Create_Time)
+		VALUES 
+		
+		]]>
+		<foreach collection="list" index="index" item="item"
+			separator=",">
+			(
+			NewID(),#{item.DWMC},#{item.DWH},#{item.DWBBM},#{item.DWLBM},#{item.DWDM},#{item.sequence},#{item.DWJC},GETDATE())
+		</foreach>
+	</insert>
+
+	<!-- 批量删除教育单位数据 -->
+	<delete id="deleteSchool">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_School_Info
+    ]]>
+	</delete>
+
+	<!-- 批量同步学生数据 -->
+	<insert id="addStudents" parameterType="java.util.List">
+    <![CDATA[
+        INSERT INTO 
+          	&{framework.tmis.table.prefix['platform']}tbl_Student_Info
+			  (id,Stu_Name,Sex,Stu_Pk,School_Code,School_Name,Class_Id,Class_Name
+			  ,SFZJH,XJFH,STATE,STATE_CODE,Create_time)
+		VALUES 
+	]]>
+		<foreach collection="list" index="index" item="item"
+			separator=",">
+			( NewID(),#{item.XM},#{item.XBM},#{item.PK},#{item.XXPK},
+			#{item.XXMC},#{item.BJID},#{item.BJ},#{item.SFZJH},
+			#{item.XJFH},#{item.STATE} ,#{item.STATE_CODE},GETDATE() )
+
+		</foreach>
+	</insert>
+
+	<!-- 往学生学校关系表批量插入学校code ,学生pkId -->
+	<insert id="addStudentRefSchool" parameterType="java.util.List">
+		   
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School
+				(id,Student_Id,School_Code,state)
+		VALUES 
+		]]>
+		<foreach collection="list" index="index" item="item"
+			separator=",">
+			( NewID(),#{item.PK},#{item.XXPK},'0' )
+		</foreach>
+	</insert>
+	<!-- 往学生学校关系表批量插入班级id ,学生pkId -->
+	<insert id="addStudentRefClass" parameterType="java.util.List">
+   		   <![CDATA[
+        		INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class
+					(id,Student_Id,Class_Id,Create_Time,Create_Person)
+				VALUES 
+		    ]]>
+		<foreach collection="list" index="index" item="item"
+			separator=",">
+			( NewID(),#{item.SFZJH},#{item.BJID},GETDATE(),#{item.createPerson})
+		</foreach>
+	</insert>
+
+	<!-- 批量删除学生学校关系表数据 -->
+	<delete id="deleteStudentRefSchool">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School
+    ]]>
+	</delete>
+
+	<!-- 批量删除老师学校关系表数据 -->
+	<delete id="deleteTeacherRefSchool">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School
+    ]]>
+	</delete>
+
+	<!-- 批量删除学生数据 -->
+	<delete id="deleteStudent">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Student_Info
+    ]]>
+	</delete>
+
+	<!-- 批量删除学生班级数据 -->
+	<delete id="deleteStudentRefClass">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class
+    ]]>
+	</delete>
+
+	<!-- 批量同步科目数据 -->
+	<insert id="addCourses" parameterType="java.util.List">
+		
+          <![CDATA[
+              INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Course_Info
+                 (id,Course_Name,Course_Id,Course_PId,Create_Time)
+              VALUES
+            ]]>
+		<foreach collection="list" index="index" item="item"
+			separator=",">
+			(NewID(),#{item.NAME},#{item.ID},#{item.TYPE_ID},GETDATE())
+		</foreach>
+	</insert>
+
+	<!-- 删除科目数据 -->
+	<delete id="deleteCourse">  
+      <![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Course_Info
+    ]]>
+	</delete>
+	<!-- 批量同步班级数据 -->
+	<insert id="addClass" parameterType="java.util.List">
+          <![CDATA[
+               INSERT INTO
+  				 &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+                 (id,Class_Name,Class_No,NJID,Grade_Name,Class_Pk,
+                  Grade_No,School_Code,Create_Time,Is_Xjb)
+              VALUES
+            ]]>
+		<foreach collection="list" index="index" item="item" separator=",">
+			(NewID(),#{item.BJMC},#{item.CLASSNO},#{item.NJID},
+			#{item.NJMC},#{item.BJID},#{item.NJDM},#{item.XXID},
+			GETDATE(),'0')
+		</foreach>
+	</insert>
+
+	<!-- 删除班级数据 -->
+	<delete id="deleteClass">  
+      <![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+    ]]>
+	</delete>
+	<!-- 初始化知识点数据 -->
+	<insert id="initKnowledgeData" parameterType="java.util.List">
+	 <![CDATA[
+	   INSERT INTO 
+	          &{framework.tmis.table.prefix['platform']}tbl_Knowledge_Data
+	   		  (id,Knowledge_Id,Knowledge_Name,Grade_No,Grade_Name,Term_Name,Term_No,
+	   		   Period,Period_Id,Parent_Id,Status,Subject_Name,Subjcet_Id,Sort)
+	   VALUES
+	 ]]>
+	 <foreach collection="list" index="index" item="item" separator=",">
+	 	(NEWID(),#{item.ID},#{item.NAME},#{item.NJDM},#{item.NJMC},#{item.XQMC},
+	 	#{item.XQDM},#{item.XDMC},#{item.XDDM},#{item.PARENT_ID},#{item.STATUS},
+	 	#{item.SUBJECT_NAME},#{item.SUBJECT_ID},#{item.SORT})
+	 </foreach>
+	</insert>
+	<!-- 删除所有知识点数据 -->
+	<delete id="removeKnowledgeData">
+	  <![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Knowledge_Data
+  	  ]]>
+	</delete>
+
+</mapper>

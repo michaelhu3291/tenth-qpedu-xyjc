@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="scoreAnalusis">
+
+	<!-- 多条件查询成绩 -->
+	<select id="selectScoreByCourse" needPaging="true"
+		parameterType="Map" resultType="Map">
+	    <![CDATA[
+	 	 SELECT * from  &{framework.tmis.table.prefix['platform']}V_Score_Data
+	    ]]>
+		<where>
+			<if test="schoolYear!=null and schoolYear!=''">
+				School_Year=#{schoolYear}
+			</if>
+			<if test="term!=null and term!=''">
+				AND Term=#{term}
+			</if>
+			<if test="examType!=null and examType!=''">
+				AND Exam_Type=#{examType}
+			</if>
+			<if test="schoolType!=null and schoolType!=''">
+				AND School_Type=#{schoolType}
+			</if>
+		</where>
+	</select>
+
+	<!-- 各科成绩四率查询 -->
+	<select id="getScoreByCorse" needPaging="true" parameterType="Map" resultType="Map">
+	 <![CDATA[
+	  SELECT 
+	   (
+	    (SELECT convert(FLOAT,COUNT(Total_Score)
+	   )FROM &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Total_Score between 90 and 100 
+       AND Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term})/
+       (SELECT COUNT(Total_Score) FROM &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term} ))as  Yl ,
+       AVG(Total_Score) as sAvg,
+       ((SELECT convert(FLOAT,count(Total_Score))FROM  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Total_Score between 80 and 89 
+       AND Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term})/
+       (SELECT COUNT(Total_Score) FROM &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term}))  
+       as Ll ,((SELECT convert(FLOAT,count(Total_Score)) FROM  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Total_Score >=80  AND Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term})/
+       (SELECT COUNT(Total_Score) FROM  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term})) as Yll , 
+       ((SELECT convert(FLOAT,count(Total_Score)) FROM  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Total_Score>= 60 AND Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term})/
+       (SELECT COUNT(Total_Score) FROM  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       WHERE Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term})) as Jgl ,School_Code ,School_Name
+       from  &{framework.tmis.table.prefix['platform']}V_Course_Score 
+       where Course=#{course} AND Grade_Id=#{grade} AND Exam_Type=#{examType} AND School_Year=#{schoolYear} 
+       AND School_Type =#{schoolType} AND School_Code=#{school} AND Term=#{term}
+       GROUP BY School_Code ,School_Name
+	 
+	 
+	]]>
+	</select>
+</mapper>

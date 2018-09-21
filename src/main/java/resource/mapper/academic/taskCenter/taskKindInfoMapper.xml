@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+    <mapper namespace="taskKind">
+      <resultMap id="taskKindMap" type="data.academic.taskCenter.entity.EntityTaskKindInfo">
+           <id property="id" column="id"/> 
+           <result property="appCode" column="APP_CODE"/>
+           <result property="taskKindCode" column="TASK_KIND_CODE"/>
+           <result property="taskKideName" column="TASK_KIND_NAME"/>
+           <result property="taskType" column="TASK_TYPE"/>
+           <result property="taskFinisMode" column="TASK_FINISH_MODE"/>
+           <result property="taskKindStatus" column="TASK_KIND_STATUS"/>
+           <result property="remindMsgType" column="REMIND_MSG_TYPE"/>
+           <result property="taskSeq" column="TASK_SEQ"/>
+           <result property="createUserName" column="CREATE_USER_NAME"/>
+           <result property="createTime" column="CREATE_TIME"/>
+           <result property="lastUpdateUserName" column="LAST_UPDATE_USER_NAME"/>
+           <result property="lastUpdateTime" column="LAST_UPDATE_TIME"/>
+     </resultMap>
+   
+   
+   	<!-- 分页查询数据-->
+	<select id="selectTaskKindPaging" needPaging="true" parameterType="Map" resultMap="taskKindMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Task_Kind_Info 
+    ]]>
+     <where>
+        <if test="appCode!=null and appCode!=''">
+	   		AND APP_CODE like CONCAT('%',#{appCode},'%')
+		</if>
+     </where>
+   </select>
+   <!--依据id查询数据-->
+ <select id="TaskKindload"  parameterType="java.lang.String" resultMap="taskKindMap">
+ 	<![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Task_Kind_Info where id = #{id} 
+    ]]>
+ </select>
+    
+    <!--新增-->
+	<insert id="insertTaskKind" parameterType="data.academic.taskCenter.entity.EntityTaskKindInfo">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Task_Kind_Info
+        (id,APP_CODE,TASK_KIND_CODE,TASK_KIND_NAME,TASK_TYPE,TASK_FINISH_MODE,TASK_KIND_STATUS,
+        REMIND_MSG_TYPE,TASK_SEQ,CREATE_USER_NAME,CREATE_TIME,LAST_UPDATE_USER_NAME,LAST_UPDATE_TIME)
+		VALUES(#{id},#{appCode},#{taskKindCode},#{taskKideName},#{taskType},#{taskFinisMode},#{taskKindStatus}, 
+		#{remindMsgType},#{taskSeq},#{createUserName},#{createTime},#{lastUpdateUserName},#{lastUpdateTime})
+    ]]>
+	</insert>
+   
+   
+    <!--修改	-->
+	
+	 <update id="updateTaskKind" parameterType="data.academic.taskCenter.entity.EntityTaskKindInfo">
+	    <![CDATA[
+	   update &{framework.tmis.table.prefix['platform']}tbl_Task_Kind_Info
+		set APP_CODE=#{appCode},
+			TASK_KIND_CODE=#{taskKindCode},
+		    TASK_KIND_NAME=#{taskKideName},
+		    TASK_TYPE=#{taskType},
+		    TASK_FINISH_MODE=#{taskFinisMode},
+		    TASK_KIND_STATUS=#{taskKindStatus},
+		    REMIND_MSG_TYPE=#{remindMsgType},
+		    TASK_SEQ=#{taskSeq},
+		    CREATE_USER_NAME=#{createUserName},
+		    CREATE_TIME=#{createTime},
+		    LAST_UPDATE_USER_NAME=#{lastUpdateUserName},
+		    LAST_UPDATE_TIME=#{lastUpdateTime}
+		    where id = #{id}
+	     ]]>
+	 </update>	
+	 
+	 <!-- 依据id删除公告信息 -->
+	<delete id="deleteTaskKind">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Task_Kind_Info where id in 
+    ]]>
+    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+ <select id="loadTaskKindNameByCode"  parameterType="java.lang.String" resultType="java.lang.String">
+ 	<![CDATA[
+        select TASK_KIND_NAME as taskIndName from &{framework.tmis.table.prefix['platform']}tbl_Task_Kind_Info where TASK_KIND_CODE= #{taskKindCode} 
+    ]]>
+ </select>
+     </mapper>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="platformUserBua">
+	<!-- 用户和组织机构多对一关系结果 -->
+	<resultMap id="userMap" type="data.platform.entity.EntityPlatformUserBua">  
+        <id property="id" column="USER_ID"/>  
+        <result property="user_uid" column="USER_UID"/> 
+        <result property="user_passwd" column="USER_PASSWD"/> 
+        <result property="last_update_time" column="LAST_UPDATE_TIME"/>
+    </resultMap>
+    
+	<select id="loadUser" parameterType="java.lang.String" resultMap="userMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix.bua['platform']}BUA_USER where USER_ID = #{id}
+    ]]>
+	</select>
+	
+	<update id="updateUser" parameterType="data.platform.entity.EntityPlatformUserBua">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+		set USER_PASSWD=#{user_passwd},
+		LAST_UPDATE_TIME=#{last_update_time}
+		where USER_ID = #{id}
+    ]]>
+	</update>
+</mapper>

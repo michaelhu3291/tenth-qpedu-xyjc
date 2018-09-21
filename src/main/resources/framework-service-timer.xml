@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+	<bean id="jobdetailbean" class="org.springframework.scheduling.quartz.JobDetailBean"
+		abstract="false" singleton="true" lazy-init="default" autowire="default"
+		dependency-check="default">
+		<property name="jobClass">
+			<value>data.academic.util.updateQpDataTimerTaskUtil</value>
+		</property>
+	</bean>
+	<!-- 定时器注册 -->
+	<bean id="servicetrigger" class="org.springframework.scheduling.quartz.CronTriggerBean"
+		abstract="false" singleton="true" lazy-init="default" autowire="default"
+		dependency-check="default">
+		<!-- 任务的详细信息 -->
+		<property name="jobDetail">
+			<ref bean="jobdetailbean" />
+		</property>
+		<!-- 每天凌晨一点 -->
+		<property name="cronExpression">
+			<value>0 0 01 * * ?</value>
+			<!-- <value>0 0/5 * * * ?</value> -->
+		</property>
+	</bean>
+	<!-- 定时任务工厂注册 -->
+	<bean id="schedulerFactory"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean"
+		abstract="false" singleton="true" lazy-init="default" autowire="default"
+		dependency-check="default">
+		<property name="triggers">
+			<list>
+				<ref bean="servicetrigger" />
+			</list>
+		</property>
+	</bean>
+</beans>  

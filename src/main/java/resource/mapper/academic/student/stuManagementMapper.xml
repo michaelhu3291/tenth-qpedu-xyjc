@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="stu">
+	<resultMap id="stuMap"
+		type="data.academic.studentManagement.entity.EntityStudent">
+
+		<id property="id" column="id" />
+		<result property="stuName" column="Stu_Name" />
+		<result property="stuName" column="Stu_Name" />
+		<result property="sex" column="SEX" />
+		<result property="stuCode" column="Stu_Code" />
+		<result property="stuPk" column="Stu_Pk" />
+		<result property="stuNumber" column="Stu_Number" />
+		<result property="schoolCode" column="School_Code" />
+		<result property="schoolName" column="School_Name" />
+		<result property="classId" column="Class_Id" />
+		<result property="gradeId" column="Grade_Id" />
+		<result property="stateCode" column="State_Code" />
+		<result property="xjfh" column="XJFH" />
+	</resultMap>
+	<!-- 学生查询 -->
+	<!-- select LTRIM(RTRIM(Stu_Name)) as stuName,* from &{framework.tmis.table.prefix['platform']}tbl_Student_Info -->
+	<select id="selectPaging" needPaging="true" parameterType="Map"
+		resultType="Map">
+		<![CDATA[
+		         SELECT DISTINCT LTRIM(RTRIM(Stu_Name)) as Stu_Name,trss.State,tsi.Stu_Pk,tsi.Class_Name,
+		            tsi.SFZJH,tsi.School_Name,tci.Class_No,tsi.Class_Id,tsi.School_Code,tsi.XJFH,tci.Is_Xjb,
+		            ts.School_Type_Sequence,ts.School_Short_Name,tci.Grade_No ,trsc.Course 
+		         FROM &{framework.tmis.table.prefix['platform']}tbl_Student_Info tsi
+				 INNER JOIN  
+					&{framework.tmis.table.prefix['platform']}tbl_ref_Student_School trss 
+				    on tsi.Stu_Pk=trss.Student_Id
+				inner join  
+					&{framework.tmis.table.prefix['platform']}tbl_School_Info ts 
+					on trss.School_Code=ts.School_Code 
+				LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci
+					on tsi.Class_Id=tci.Class_Pk
+				LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse trsc
+     				on tsi.SFZJH=trsc.SFZJH
+		]]>       
+		
+		<where>
+		and 1=1
+		    <if test="schoolCodeList!=null and schoolCodeList.size>0">
+		       AND trss.School_Code in 
+		     <foreach collection="schoolCodeList" index="index" item="item" open="(" separator="," close=")">
+		         #{item}
+		     </foreach>
+		    </if>
+	    	<if test="xjfh!=null and xjfh!=''">  
+	           AND (XJFH like CONCAT('%',#{xjfh},'%')
+	       	</if>
+	       	<if test="studentName!=null and studentName!=''">  
+	           OR Stu_Name like CONCAT('%',#{studentName},'%'))
+	       	</if>
+	       	
+	       	<if test="schoolType != null and schoolType != ''">  
+	           AND ts.School_Type_Sequence like CONCAT('%',#{schoolType},'%')
+	       	</if>
+	       	<if test="school != null and school != ''">  
+	           AND ts.School_Code like CONCAT('%',#{school},'%')
+	       	</if>
+	   	
+	   	   <if test="studentGrade!='' and studentGrade!=null">
+	   	     AND tci.Grade_No=#{studentGrade}
+	   	   </if>
+	   	   
+	   	   <if test="studentCourse!='' and studentCourse!=null">
+	   	     AND trsc.Course=#{studentCourse}
+	   	   </if>
+	   	   
+	   	   <if test="studentState!=null and studentState!=''">
+	   	    AND trss.State=#{studentState}
+	   	   </if>
+	   	   <if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,tci.Class_No) &gt;= #{minClassNo}
+			   AND convert(int,tci.Class_No) &lt;= #{maxClassNo}
+			</if>
+		</where>
+	</select>
+	
+	<!-- 学生查询导出 -->
+	<!-- select LTRIM(RTRIM(Stu_Name)) as stuName,* from &{framework.tmis.table.prefix['platform']}tbl_Student_Info -->
+	<select id="selectPagingImport"  parameterType="Map"
+		resultType="Map">
+		<![CDATA[
+		         SELECT DISTINCT LTRIM(RTRIM(Stu_Name)) as Stu_Name,trss.State,tsi.Stu_Pk,tsi.Class_Name,
+		            tsi.SFZJH,tsi.School_Name,tci.Class_No,tsi.Class_Id,tsi.School_Code,tsi.XJFH,tci.Is_Xjb,
+		            ts.School_Type_Sequence,ts.School_Short_Name,tci.Grade_No ,trsc.Course 
+		         FROM &{framework.tmis.table.prefix['platform']}tbl_Student_Info tsi
+				 INNER JOIN  
+					&{framework.tmis.table.prefix['platform']}tbl_ref_Student_School trss 
+				    on tsi.Stu_Pk=trss.Student_Id
+				inner join  
+					&{framework.tmis.table.prefix['platform']}tbl_School_Info ts 
+					on trss.School_Code=ts.School_Code 
+				LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci
+					on tsi.Class_Id=tci.Class_Pk
+				LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse trsc
+     				on tsi.SFZJH=trsc.SFZJH
+		]]>       
+		
+		<where>
+		and 1=1
+		    <if test="schoolCodeList!=null and schoolCodeList.size>0">
+		       AND trss.School_Code in 
+		     <foreach collection="schoolCodeList" index="index" item="item" open="(" separator="," close=")">
+		         #{item}
+		     </foreach>
+		    </if>
+	    	<if test="xjfh!=null and xjfh!=''">  
+	           AND (XJFH like CONCAT('%',#{xjfh},'%')
+	       	</if>
+	       	<if test="studentName!=null and studentName!=''">  
+	           OR Stu_Name like CONCAT('%',#{studentName},'%'))
+	       	</if>
+	       	
+	       	<if test="schoolType != null and schoolType != ''">  
+	           AND ts.School_Type_Sequence like CONCAT('%',#{schoolType},'%')
+	       	</if>
+	       	<if test="school != null and school != ''">  
+	           AND ts.School_Code like CONCAT('%',#{school},'%')
+	       	</if>
+	   	
+	   	   <if test="studentGrade!='' and studentGrade!=null">
+	   	     AND tci.Grade_No=#{studentGrade}
+	   	   </if>
+	   	   
+	   	   <if test="studentCourse!='' and studentCourse!=null">
+	   	     AND trsc.Course=#{studentCourse}
+	   	   </if>
+	   	   
+	   	   <if test="studentState!=null and studentState!=''">
+	   	    AND trss.State=#{studentState}
+	   	   </if>
+	   	   <if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,tci.Class_No) &gt;= #{minClassNo}
+			   AND convert(int,tci.Class_No) &lt;= #{maxClassNo}
+			</if>
+		</where>
+		order by Grade_No,Class_No
+	</select>
+	
+	<!-- 根据schoolCode查询学校名 -->
+	<select id="getSchoolNameBySchoolCode" parameterType="java.lang.String" resultType="java.lang.String">
+	     <![CDATA[
+	     	select School_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+	     	where School_Code = #{schoolCode}
+         ]]>
+	</select>
+	<!-- 根据schoolCode查询学校名short -->
+	<select id="getSchoolShortNameBySchoolCode" parameterType="java.lang.String" resultType="java.lang.String">
+	     <![CDATA[
+	     	select School_Short_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+	     	where School_Code = #{schoolCode}
+         ]]>
+	</select>
+	<!-- 根据classCode查询班级名称 -->
+	<select id="getClassNameByClassCode" parameterType="java.lang.String" resultType="java.lang.String">
+	     <![CDATA[
+	     	select Class_Name from &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+	     	where Class_Pk = #{id}
+         ]]>
+	</select>
+	<!-- 添加随班就读学生(学生表) -->
+	<insert id="addStudent"  parameterType="Map">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Student_Info
+		(Id,Stu_Name,Stu_Pk,School_Name,School_Code,Create_Person,Create_Time,STATE,STATE_CODE,SFZJH)
+		VALUES(#{id},#{chinesename},#{uuid},#{schoolName},#{schoolCode},#{create_person},#{create_time},#{state},#{stateCode},#{idCard})  
+    ]]>
+	</insert>
+	
+	<!-- 更新学生的班级 -->
+	<update id="updateClassByStudentId" parameterType="Map">
+	   <![CDATA[
+	      update &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class
+		  set Class_Id=#{classId},
+		      Update_Time=GETDATE(),
+		      Update_Person=#{updatePerson}
+		  where 
+		  Student_Id =#{studentId}
+	    ]]>
+	   
+	</update>
+	
+	<update id="updateStudentClass"   parameterType="Map">
+	     <![CDATA[
+	      update &{framework.tmis.table.prefix['platform']}tbl_Student_Info
+		  set Class_Id=#{Class_Pk},
+		      Update_Time=GETDATE(),
+		      Update_Person=#{updatePerson},
+		      Class_Name=#{Class_Name}
+		  where 
+		  Stu_Pk =#{studentId}
+	    ]]>
+	</update>
+	 
+	<!-- 添加随班就读学生(学生学校关系表) -->
+	<insert id="addRefStudentSchool"  parameterType="Map">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School
+		(Id,Student_Id,School_Code,State)
+		VALUES(#{id},#{uuid},#{schoolCode},'1')  
+    ]]>
+	</insert>
+    
+    <!-- 添加随班就读学生(学生班级关系表) -->
+	<insert id="addRefStudentClass"  parameterType="Map">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class
+		(Id,Student_Id,Create_Time,Create_Person)
+		VALUES(#{id},#{idCard},#{create_time},#{create_person}) 
+    ]]>
+	</insert>
+    
+	<!-- 得到当前学生所在的学校 -->
+	<select id="getSchoolByStuId" parameterType="java.lang.String" resultType="Map">
+	     <![CDATA[
+	                select 
+	                    rss.School_Code,tsi.School_Name,tsi.School_Type_Sequence,tsi.School_Short_Name
+	                from 
+                       &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School rss 
+                       left join &{framework.tmis.table.prefix['platform']}tbl_School_Info  tsi
+                       on rss.School_Code=tsi.School_Code
+                    where  
+                       Student_Id =#{id}
+         ]]>
+	</select>
+	
+	<!-- 得到当前学生所在的班级-->
+	<select id="getClassByStuId" parameterType="java.lang.String" resultType="Map">
+	     <![CDATA[
+	               select rts.Class_Id,tsi.Class_Name,trcg.Grade_Id,tgi.Grade_Name from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class rts 
+                    left join &{framework.tmis.table.prefix['platform']}tbl_Class_Info  tsi
+                    on rts.Class_Id=tsi.id inner join &{framework.tmis.table.prefix['platform']}tbl_ref_Class_Grade trcg
+                    on trcg.Class_Id=tsi.id inner JOIN &{framework.tmis.table.prefix['platform']}tbl_Grade_Info tgi on tgi.id=trcg.Grade_Id
+                    where  
+                    Student_Id =#{id}
+         ]]>
+	</select>
+	
+	<!-- 得到当前学生所在的科目-->
+	<select id="getCourseByStuId" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	     
+	                select Course from 
+                    &{framework.tmis.table.prefix['platform']}tbl_ref_Student_ChooseCourse
+                    where  
+                    SFZJH =#{xfzjh}
+         ]]>
+	</select>
+	
+	<!-- 得到当前学生所在班级-->
+	<select id="getClassByStuSfzjh" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	             select 
+	                Class_Name,Class_No,Class_Pk,Grade_Name,Grade_No 
+	             from  &{framework.tmis.table.prefix['platform']}tbl_Class_Info 
+	             where 
+                    Class_Pk= 
+                    (
+                     select Class_Id 
+                     from 
+                       &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class
+                    where  
+                        Student_Id =#{sfzjh}
+                    )
+         ]]>
+	</select>
+	<!-- 学生在原校所在的班级-->
+	<select id="getOldClassByStuSfzjh" parameterType="Map" resultType="Map">
+	     <![CDATA[
+	             select 
+	                Class_Name,Class_No,Class_Pk,Grade_Name,Grade_No 
+	             from  &{framework.tmis.table.prefix['platform']}tbl_Class_Info 
+	             where 
+                    Class_Pk= 
+                    (
+                     select Class_Id 
+                     from 
+                       &{framework.tmis.table.prefix['platform']}tbl_Student_Info
+                    where  
+                        SFZJH =#{sfzjh}
+                    )
+         ]]>
+	</select>
+	
+	<!--得到调出的学生 -->
+	<select id="getCallOutStudentById"  parameterType="Map" resultType="java.lang.String">
+		<![CDATA[
+		       select State from
+		          &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School 
+		       where 
+		           School_Code = #{schoolCode} and Student_Id =#{studentId}
+		]]>
+		        
+	</select>
+	
+	<!--得到调动学生的身份证件号 -->
+	<select id="getIdCardByStuPk"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select SFZJH 
+		       from 
+		          &{framework.tmis.table.prefix['platform']}tbl_Student_Info 
+		       where 
+		           Stu_Pk=#{studentPk}
+		]]>
+	</select>
+
+    <!-- 更新学生学籍状态 学生表 -->
+	<update id="updateStuStateForStudent" parameterType="Map">
+	   <![CDATA[
+	      update &{framework.tmis.table.prefix['platform']}tbl_Student_Info
+		  set State=#{stateName},
+		      State_Code=#{stateCode}
+		  where 
+		  Stu_Pk =#{studentPk}
+	    ]]>
+	</update>
+    <!-- 更新学生学籍状态 学生学校关系表 -->
+	<update id="updateStuStateForStudentRefSchool" parameterType="Map">
+	   <![CDATA[
+	      update &{framework.tmis.table.prefix['platform']}tbl_ref_Student_School
+		  set  State=#{state}
+		  where 
+		  Student_Id  =#{studentPk}
+		  and School_Code=#{schoolCode}
+	    ]]>
+		
+	</update>
+	
+	<!--得根据考号查到对应学生所在的班级和类型 -->
+	<select id="findClassDetail"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select
+	       		tci.Class_Name AS className,
+				tci.Is_Xjb AS classType,
+				tci.School_Code AS schoolCode,
+				tci.Class_Pk AS classId,
+				tci.Grade_No AS grade,
+				trse.XJFH as xjh,
+				tsi.School_Name AS schoolName 
+				from
+		          &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber trse
+		          left join &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class trsc
+		          			on trse.SFZJH = trsc.Student_Id
+		          left join &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci
+		          			on tci.Class_Pk = trsc.Class_Id
+		          LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_School_Info tsi 
+		          			on tci.School_Code = tsi.School_Code
+		          
+		       where 
+		           trse.Exam_Number=#{examNumber}
+		]]>
+	</select>
+	<select id="findInfoList"  parameterType="Map" resultType="data.academic.qualityAnalysis.entity.StuTempInfo">
+		<![CDATA[
+		       select
+		        trse.Exam_Number as examNumber,
+	       		tci.Class_Name AS className,
+				tci.Is_Xjb AS classType,
+				tci.School_Code AS schoolCode,
+				tci.Class_Pk AS classId,
+				tci.Grade_No AS grade,
+				trse.XJFH as xjh,
+				tsi.School_Short_Name AS schoolName,
+				trse.Exam_Code as examCode 
+				from
+		          &{framework.tmis.table.prefix['platform']}tbl_ref_StuCode_ExamNumber trse
+		          left join &{framework.tmis.table.prefix['platform']}tbl_ref_Student_Class trsc
+		          			on trse.SFZJH = trsc.Student_Id
+		          left join &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci
+		          			on tci.Class_Pk = trsc.Class_Id
+		          LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_School_Info tsi 
+		          			on tci.School_Code = tsi.School_Code
+		 ]]>
+		       where 
+		           trse.Exam_Number  in
+		           <foreach collection="examNumList" item="item"  open="(" separator="," close=")">
+	  				#{item}
+	  				</foreach>
+	</select>
+</mapper>

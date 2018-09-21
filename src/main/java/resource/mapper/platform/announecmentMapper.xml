@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="announcementBasicInfo">
+  <resultMap id="announcementBasicInfoMap" type="data.platform.entity.EntityAnnouncementBasicInfo">  
+        <id property="id" column="id"/>  
+        <result property="title" column="Title"/>
+        <result property="context" column="Context"/>
+        <result property="status" column="Status"/>
+        <result property="seqNums" column="SeqNums"/>
+        <result property="publishPerson" column="PublishPerson"/>
+        <result property="publishDate" column="PublishDate"/>
+        <result property="enableTimeStart" column="EnableTimeStart"/>
+        <result property="enableTimeEnd" column="EnableTimeEnd"/>
+        <result property="publishPersonId" column="PublishPersonId"/>
+        <result property="createDate" column="CreateDate"/>
+        <result property="createPerson" column="CreatePerson"/>
+        <result property="updateTime" column="UpdateTime"/>
+        <result property="updatePerson" column="UpdatePerson"/>
+        <result property="partakePersons" column="PartakePersons"/>
+        <result property="partakePersonIDS" column="PartakePersonIDs"/>
+        <result property="teamNames" column="TeamNames"/>
+        <result property="teamCodes" column="TeamCodes"/>
+        <result property="announcementType" column="AnnouncementType"/>
+        <result property="grade" column="Grade"/>
+        <!-- 关联附件信息-->
+        <collection property="files"  ofType="data.platform.entity.EntityPlatformFile" javaType="java.util.ArrayList">
+			<id property="id" column="f_id"/>  
+        	<result property="fileName" column="f_FileName"/>
+        	<result property="path" column="f_Path"/>
+        	<result property="fileNameInServer" column="f_FileNameInServer"/>
+		</collection>
+   </resultMap>
+   
+   <!-- 依据id查询公告信息-->
+	<select id="load" parameterType="java.lang.String" resultMap="announcementBasicInfoMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo  where id = #{id}
+    ]]>
+	</select>
+	
+	<!-- 依据id查询公告信息-->
+	<select id="loadNoticeInfoById" parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo where id = #{id}
+    ]]>
+	</select>
+	
+	<!-- 依据id查询公告信息（带有附件）-->
+	<select id="loadNoticeInfo" parameterType="java.lang.String" resultMap="announcementBasicInfoMap">
+    <![CDATA[
+        select noticeInfo.*,f.id as f_id,f.FileName as f_FileName,f.FileNameInServer as f_FileNameInServer, f.FilePathInServer as f_Path
+        from &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo noticeInfo left join
+                       &{framework.tmis.table.prefix['platform']}tbl_PD_Accessory f on f.AssociatedObjectID = noticeInfo.id
+         where noticeInfo."id" = #{id} 
+    ]]>
+	</select>
+	
+	
+	<!-- 查询所有已发布的公告信息-->
+	<select id="searchAllAnnouncements" resultMap="announcementBasicInfoMap">
+    <![CDATA[
+        select noticeInfo.* from &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo noticeInfo where (getDate() between EnableTimeStart and EnableTimeEnd) and Status=2 order by SeqNums asc, PublishDate desc
+    ]]>
+	</select>
+	
+	<!-- 查询某用户是不是，该公告参与人-->
+	<select id="selectPartakePerson" parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+      select * from &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo 
+         where  "PublishPersonId"=#{userId}
+        		AND (#{userId} in  
+        		    (select distinct u.id from 
+					   &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u left join 
+					   &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping m on u.id=m.UserID left join
+					   &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles r on m.RoleID=r.id where r.ApprovalRole='announcement'
+				     ) 
+    ]]>
+	</select>
+	
+	<!-- 查询用户关联角色 -->
+    <select id="selectUserRoles" parameterType="java.lang.String" resultType="java.lang.String">
+    <![CDATA[
+        select RoleID from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping where UserID = #{userId}
+    ]]>
+	</select>
+	
+	<!-- 查看通知公告 -->
+	<select id="selectAnnouncementPaging" needPaging="true" parameterType="Map" resultType="Map">
+    <![CDATA[
+        select  n.* from &{framework.tmis.table.prefix['platform']}tbl_Notice_Team t 
+       		left join &{framework.tmis.table.prefix['platform']}tbl_Notice_BasicInfo n on n.ID=t.AnnouncementId
+        where t.PersonId = #{currentId}
+    ]]>
+	</select>
+</mapper>

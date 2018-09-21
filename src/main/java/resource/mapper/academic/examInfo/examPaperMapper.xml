@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="examPaper">
+
+
+	<!-- 根据科目查询试卷 -->
+	<select id="getExamPaperByCourse" parameterType="Map"
+		resultType="Map">
+        <![CDATA[
+           SELECT DISTINCT tef.Id,tef.Exam_Id,tef.Exam_Code,tef.Course,tef.FileSource,
+               tef.FileName,tef.FileNameExtension,tef.FileNameInServer,tef.FilePathInServer,
+               tef.FileSize,tef.FileUploadTime,tef.Operator,tef.UpdatePerson,tef.UpdateTime,tef.IsPublic
+           FROM  &{framework.tmis.table.prefix['platform']}tbl_Exampaper_File tef          
+        ]]>
+		<where>
+			AND 1=1
+			<if test="examCode!='' and examCode!=null">
+				AND tef.Exam_Code=#{examCode}
+			</if>
+			<if test="course!='' and course!=null">
+				AND tef.Course=#{course}
+			</if>
+		</where>
+
+	</select>
+
+
+	<!-- 根据考试编号得到科目 -->
+	<select id="getCoursesByExamCode" parameterType="Map"
+		resultType="Map">
+    <![CDATA[
+      SELECT  DISTINCT Course,SortNumber 
+      FROM  &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course 
+    ]]>
+		<where>
+			AND 1=1
+			<if test="examCode!='' and examCode!=null">
+				AND Exam_Code=#{examCode}
+			</if>
+		</where>
+		ORDER BY SortNumber ASC
+	</select>
+
+
+	<!-- 加载试卷 -->
+	<select id="loadExamPaper" parameterType="java.lang.String"
+		resultType="data.academic.examInfo.entity.EntityExamPaper">
+        <![CDATA[
+           SELECT tef.Id,tef.Exam_Id,tef.Exam_Code,tef.Course,tef.FileSource,
+                  tef.FileName,tef.FileNameExtension,tef.FileNameInServer,tef.FilePathInServer,
+                  tef.FileSize,tef.FileUploadTime,tef.Operator,tef.UpdatePerson,tef.UpdateTime,tef.IsPublic
+           FROM  &{framework.tmis.table.prefix['platform']}tbl＿Exampaper_File tef
+           WHERE　Id = #{id}
+        ]]>
+	</select>
+
+
+	<!-- 上传试卷 -->
+	<insert id="insertExamPaper" parameterType="data.academic.examInfo.entity.EntityExamPaper">
+		<selectKey resultType="java.lang.String" keyProperty="id"
+			order="BEFORE">
+			SELECT NewID()
+		</selectKey>
+       <![CDATA[
+            INSERT INTO &{framework.tmis.table.prefix['platform']}tbl＿Exampaper_File
+                   (Id,Exam_Id,Exam_Code,Course,FileSource,FileName,FileNameExtension,FileNameInServer,
+                   FilePathInServer,FileSize,FileUploadTime,Operator,UpdatePerson,UpdateTime,IsPublic,School_Code)
+            VALUES(#{id},#{examId},#{examCode},#{course},#{fileSource},#{fileName},#{fileNameExtension},#{fileNameInServer},
+                   #{filePathInServer},#{fileSize},#{fileUploadTime},#{operator},#{updatePerson},#{updateTime},#{isPublic},#{schoolCode})
+       ]]>
+
+	</insert>
+
+
+	<!-- 删除试卷 -->
+	<delete id="deletePaper" parameterType="java.lang.String">
+      <![CDATA[
+           DELETE FROM　&{framework.tmis.table.prefix['platform']}tbl＿Exampaper_File
+           WHERE Id = #{id}
+      ]]>
+	</delete>
+
+
+	<!-- 根据组织id 得到user_uid登录用户名 -->
+	<select id="getIdByCode" parameterType="Map" resultType="Map">
+       <![CDATA[
+          SELECT  USER_UID 
+          FROM  &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+       ]]>
+		<where>
+			AND 1=1
+			<if test="code!='' and code!=null">
+				AND ORG_ID = #{code}
+			</if>
+			AND USER_NAME LIKE '%管理员%'
+		</where>
+	</select>
+
+
+
+	<!--青浦管理员 门户页面查询前几条考试的信息 -->
+	<select id="getExam" parameterType="Map" resultType="Map">
+       <![CDATA[
+          SELECT  TOP 3  s.Brevity_Code,s.School_Short_Name,
+               e.Id,e.Exam_Time,e.Exam_Type,e.Exam_Name,e.Create_Time,e.Create_Person,e.Update_Time,e.Update_Person,e.Exam_code,
+	           e.School_Year,e.Term,e.Exam_Number,e.School_Code,e.Number_State,e.Grade_Code,e.Introduced_Time,e.Closing_Time,e.Introduced_State
+	      FROM &{framework.tmis.table.prefix['platform']}tbl_Exam_Info e 
+	      INNER　JOIN &{framework.tmis.table.prefix['platform']}tbl_School_Info s ON e.School_Code = s.School_Code      
+       ]]>
+		<where>
+			1=1 and e.Introduced_State = '1'
+			<if test="schoolCodeList!=null and schoolCodeList.size>0">
+				and e.School_Code in
+				<foreach collection="schoolCodeList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="gradeIdList!=null and gradeIdList.size>0">
+				AND e.Grade_Code in
+				<foreach collection="gradeIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+		ORDER BY e.Introduced_Time DESC
+	</select>
+
+	<!--学校管理员 门户页面查询前几条考试的信息-->
+	<select id="getExamForSchool" parameterType="Map" resultType="Map">
+    <![CDATA[
+    	SELECT  TOP 3 
+			 s.Brevity_Code,s.School_Short_Name,e.Id,e.Exam_Time,e.Exam_Type,
+			 e.Exam_Name,e.Create_Time,e.Create_Person,e.Update_Time,e.Update_Person,
+			 e.Exam_code,e.School_Year,e.Term,e.Exam_Number,e.School_Code,e.Number_State,
+			 e.Grade_Code,e.Introduced_Time,e.Closing_Time,e.Introduced_State,
+  			 sub.School_Code as subSchool
+		FROM
+	 		&{framework.tmis.table.prefix['platform']}tbl_Exam_Info e 
+	 		INNER　JOIN  &{framework.tmis.table.prefix['platform']}tbl_School_Info s 
+    		ON e.School_Code = s.School_Code 
+    		LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam
+			sub on e.Exam_Number=sub.Exam_Code
+    ]]>
+		<where>
+			1=1 and e.Introduced_State = '1' and e.Exam_Time>=GETDATE()
+			<if test="gradeIdList!=null and gradeIdList.size>0">
+				AND e.Grade_Code in
+				<foreach collection="gradeIdList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="schoolCode!=null and schoolCode!=''">
+			  AND  sub.School_Code=#{schoolCode}
+			</if>
+		</where>
+		order by e.Exam_Time asc
+	</select>
+	<!-- 门户页面查询前几条试卷的信息 -->
+	<select id="getExamPaper" parameterType="Map" resultType="Map">
+       <![CDATA[
+          SELECT DISTINCT TOP 3  s.Brevity_Code,s.School_Short_Name,tef.*
+          FROM  &{framework.tmis.table.prefix['platform']}tbl＿Exampaper_File tef
+          INNER　JOIN &{framework.tmis.table.prefix['platform']}tbl_School_Info s ON tef.School_Code = s.School_Code
+          INNER JOIN &{framework.tmis.table.prefix['platform']}tbl_Exam_Info tx ON tef.Exam_Code = tx.Exam_Number
+       ]]>
+		<where>
+			AND 1=1
+			<if test="operatorList!=null and operatorList.size>0">
+				AND tx.School_Code IN
+				<foreach collection="operatorList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			AND tef.IsPublic = '0'
+		</where>
+		ORDER BY tef.FileUploadTime DESC
+	</select>
+
+
+	<!-- 门户页面查询所有试卷的信息 -->
+	<select id="selectExamPapers" parameterType="Map" resultType="Map">
+       <![CDATA[
+          SELECT   Id,Exam_Id,Exam_Code,Course,FileSource,FileName,FileNameExtension,FileNameInServer,
+                   FilePathInServer,FileSize,FileUploadTime,Operator,UpdatePerson,UpdateTime,IsPublic
+          FROM  &{framework.tmis.table.prefix['platform']}tbl＿Exampaper_File
+       ]]>
+		<where>
+			AND 1=1
+			<if test="operatorList!=null and operatorList.size>0">
+				AND Operator IN
+				<foreach collection="operatorList" index="index" item="item"
+					open="(" separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+			AND IsPublic = '0'
+		</where>
+		ORDER BY FileUploadTime DESC
+	</select>
+
+
+	<!-- 加载试卷的公开状态（0-公开，1-不公开） -->
+	<select id="loadPaper" parameterType="Map" resultType="java.lang.String">
+        <![CDATA[
+           SELECT DISTINCT IsPublic
+           FROM &{framework.tmis.table.prefix['platform']}tbl＿Exampaper_File
+           WHERE Exam_Code = #{examCode}
+           AND Course = #{courseCode}
+        ]]>
+	</select>
+
+
+	<!-- 修改试卷是否公开（0-公开，1-不公开） -->
+	<update id="updatePaper" parameterType="Map">
+       <![CDATA[
+           UPDATE &{framework.tmis.table.prefix['platform']}tbl＿Exampaper_File
+           SET IsPublic = #{isPublic}
+           WHERE Exam_Code = #{examCode} 
+           AND Course = #{courseCode}
+       ]]>
+	</update>
+
+
+
+
+</mapper>

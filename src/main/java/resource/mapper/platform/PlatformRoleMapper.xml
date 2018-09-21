@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="platformRole">
+	<!-- 插入角色 -->
+	<insert id="insertRole" parameterType="data.platform.entity.EntityPlatformRole">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles
+		(id,RoleName,ApprovalRole,Status,Remark,CreateTime,UpdateTime,Operator)
+		VALUES(#{id},#{roleName},#{approvalRole},#{status},#{remark},#{createTime},#{updateTime},#{operator})  
+    ]]>
+	</insert>
+	
+	
+	<!-- 查询角色用户关系实体 -->
+	<select id="getRoleUser" parameterType="Map" resultType="Map">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER   
+    ]]>
+    <where>
+        <if test="roleId!=null and roleId!=''">  
+		   AND ROLE_ID = #{roleId}
+       	</if>
+    	<if test="userId!=null and userId!=''">  
+           And USER_ID = #{userId}
+       	</if>
+   	</where>
+	</select>
+	
+	<!-- 更新角色 -->
+	<update id="updateRole" parameterType="data.platform.entity.EntityPlatformRole">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles
+		set RoleName=#{roleName},
+		ApprovalRole=#{approvalRole},
+		Status=#{status},
+		Remark=#{remark},
+		UpdateTime=#{updateTime},
+		Operator=#{operator} where id = #{id}
+    ]]>
+	</update>
+	
+	<!-- 加载角色信息 -->
+	<select id="loadRole" parameterType="java.lang.String" resultType="data.platform.entity.EntityPlatformRole">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles where id = #{id}
+    ]]>
+	</select>
+	
+	<!-- 删除角色 -->
+	<delete id="deleteRole">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix.bua['platform']}BUA_ROLE where ROLE_ID in 
+    ]]>
+    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+	<!-- 角色Id和用户Id集合删除角色用户关系实体信息 -->
+	<delete id="deleteRoleUser">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER
+        where ROLE_ID =#{roleId} And USER_ID in
+    ]]>
+    <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+		<!-- 根据角色Id和职位Id集合删除角色职位关系实体信息 -->
+	<delete id="deleteRolePost">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_POST 
+        where ROLE_ID =#{roleId} And POST_ID in 
+    ]]>
+    <foreach collection="postIds" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+	<!-- 通过角色Id和组织机构集合删除角色组织机构关系实体信息 -->
+	<delete id="deleteRoleOrg" parameterType="Map">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_ORG where ROLE_ID =#{roleId} And Org_ID in 
+    ]]>
+    <foreach collection="orgIds" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+	<!-- 分页查询角色 -->
+	<select id="selectPaging" needPaging="true" parameterType="Map" resultType="data.platform.entity.EntityPlatformRole">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles 
+    ]]>
+    <where>
+    	<if test="roleName!=null and roleName!=''">
+           AND RoleName like CONCAT('%',#{roleName},'%')
+       	</if>
+       	<if test="status!=null">
+           AND Status = #{status} 
+       	</if>
+    </where>
+	</select>
+	
+	<!-- 根据条件查询角色的ID和名称信息 -->
+	<select id="selectRole" parameterType="Map" resultType="Map">
+    <![CDATA[
+        select id as value, RoleName as text from &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles 
+    ]]>
+    <where>
+    	<if test="roleName!=null and roleName!=''">
+           AND RoleName like CONCAT('%',#{roleName},'%')
+       	</if>
+       	<if test="status!=null">
+           AND Status = #{status} 
+       	</if>
+    </where>
+		order by RoleName
+	</select>
+	
+	<!-- 查询角色对应的功能权限 -->
+	<select id="selectRoleFunctions" parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+        select ControlledMenuID as menuId,ControlledButtonCode as buttonCodes from &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleFunctionalAuthority where RoleID = #{roleId}
+    ]]>
+	</select>	
+	
+	<!-- 删除角色对应的功能权限 -->
+	<delete id="deleteRoleFunctions" parameterType="java.lang.String">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleFunctionalAuthority where RoleID = #{roleId} 
+    ]]>
+	</delete>
+	
+	<!-- 保存角色对应的功能权限 -->
+	<insert id="insertRoleFunctions" parameterType="Map">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleFunctionalAuthority
+		(id,RoleID,ControlledMenuID,ControlledButtonCode,CreateTime,Operator) VALUES  
+    ]]>
+    <foreach collection="functions" index="index" item="item" separator=",">     
+  		(NewID(),#{roleId},#{item.menuId},#{item.buttonCodes},#{createTime},#{operator})
+   	</foreach>
+	</insert>
+	
+	<!-- 删除角色对应的数据权限 -->
+	<delete id="deleteRoleDataAuthoritys" parameterType="java.lang.String">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleDataAuthority where RoleID = #{roleId} 
+    ]]>
+	</delete>
+	
+	<!-- 保存角色对应的数据权限 -->
+	<insert id="insertRoleDataAuthoritys" parameterType="Map">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Platform_RoleDataAuthority
+		(id,RoleID,TMISCode_ControlledTaxFilingUnit,CreateTime,Operator) VALUES  
+    ]]>
+    <foreach collection="dataAuthoritys" index="index" item="item" separator=",">
+  		(NewID(),#{roleId},#{item},#{createTime},#{operator})
+   	</foreach>
+	</insert>	
+	
+	<!-- 根据角色ID查找用户List -->
+	<select id="selectUsersByRoleId" parameterType="java.lang.String" resultType="data.platform.entity.EntityPlatformUser">
+    <![CDATA[
+        select u.* from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u left join &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping ur on u.id = ur.UserID
+		where ur.RoleID = #{roleId}
+    ]]>
+	</select>
+	
+	<!-- 删除角色对应的用户映射 -->
+	<delete id="deleteMappingByRoleId" parameterType="java.lang.String">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping where RoleID = #{roleId}
+    ]]>
+	</delete>
+	
+	<!-- 插入用户角色映射 -->
+	<insert id="insertMappingForRole" parameterType="Map">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping
+		(id,userid,roleid)
+		VALUES(#{id},#{userId},#{roleId})  
+    ]]>
+	</insert>
+	
+		<!-- 删除用户对应的角色映射 -->
+	<delete id="deleteUserRole" parameterType="java.lang.String">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping where UserID = #{userId}
+    ]]>
+	</delete>
+	
+		<!-- 根据角色的ApprovalName查询 相应的组(中心组，工会等等) List-->
+	<select id="selectRoleTeamsByApprovalName" parameterType="java.lang.String" resultType="data.platform.entity.EntityPlatformRole">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_Platform_Roles where ApprovalRole = #{approvalName}
+    ]]>
+	</select>
+	
+	<!-- 根据角色ID查找用户List -->
+	<select id="selectUsersByUserId" parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+        select  ur.RoleID as roleId from &{framework.tmis.table.prefix['platform']}tbl_Platform_Users u left join 
+                        &{framework.tmis.table.prefix['platform']}tbl_Platform_UserRoleMapping ur on u.id = ur.UserID
+		where ur.UserID = #{userId}
+    ]]>
+	</select>
+	
+	
+	<!-- 根据角色ID查找用户List -->
+	<select id="selectRoleUser" parameterType="Map" resultType="Map">
+    <![CDATA[
+        select u.ChineseName as text,u.id as value from [stu].[dbo].[tbl_Platform_Roles] r left join 
+        			[stu].[dbo].[tbl_Platform_UserRoleMapping] m on m.RoleID=r.id left join
+        			[stu].[dbo].[tbl_Platform_Users] u on u.id=m.UserID where 1=1 and r.RoleName=#{roleName}
+    ]]>
+    
+    <if test="name!=null and name!=''">
+    	AND (u.ChineseName like CONCAT('%',#{name},'%') or u.LoginAccount like CONCAT('%',#{name},'%') or u.EnglishName like CONCAT('%',#{name},'%'))
+    </if>
+	</select>
+	 
+	 <!-- 通过角色Id和用户Id新增角色/用户关系 -->
+	<insert id="insertRoleUser" parameterType="java.lang.String"> 
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER
+	        		(ROLE_ID,USER_ID)
+			VALUES(#{roleId},#{userId})
+	    ]]>
+	</insert>
+	
+	<!-- 通过角色Id和组织机构Id新增角色/组织机构关系 -->
+	<insert id="insertRoleOrg" parameterType="Map"> 
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_ORG
+	        		(ROLE_ID,ORG_ID)
+			VALUES(#{roleId},#{orgId})
+	    ]]>
+	</insert>
+	
+	<select id="loadChaildNode" resultType="Map">
+	    <![CDATA[
+	        select * from &{framework.tmis.table.prefix.bua['platform']}BUA_USER where USER_UID !='sys'
+	    ]]>
+	    <if test="curNode!='' and curNode!=null"><!-- 加载当前节点的子节点 -->
+	    	    AND ORG_ID = #{curNode}
+	    </if>
+	    <if test="curNode=='' or curNode==null"><!-- 加载当前节点的子节点 -->
+	    	    AND	ORG_ID is null or ORG_ID=''
+	    </if>
+	</select>
+	
+	
+	<select id="loadChaildNodess" resultType="Map">
+	    <![CDATA[
+	        select * from &{framework.tmis.table.prefix.bua['platform']}BUA_ORGANIZATION where 1=1
+	    ]]>
+	    <if test="curNode!='' and curNode!=null"><!-- 加载当前节点的子节点 -->
+	    		AND ORG_PARENT_ID = #{curNode}
+	    </if>
+	    <if test="orgArea!='' and orgArea!=null"><!-- 组织授权范围 -->
+	        <choose>
+	          <when test="orgArea.size()>0">
+	               <if test="curNode!='' and curNode!=null">
+		    		AND ORG_ID in
+		    		<foreach collection="orgArea" index="index" item="item" open="(" separator="," close=")">     
+		  		    #{item}
+		   	        </foreach>
+	               </if>
+	          </when>
+	          <otherwise>
+	                AND ORG_ID is null or ORG_ID=''
+	          </otherwise>
+	        </choose>
+	    </if>
+	    <if test="curNode=='' or curNode==null">
+		    <choose> 
+		       <when test="orgType==null"><!-- 管理员用户，加载根节点 -->
+			    		AND ORG_CODE ='root'
+	           </when> 
+		       <otherwise><!-- 普通用户 -->
+		          <choose>
+		            <when test="orgType=='1'.toString()"><!-- 加载根节点 -->
+			    	AND ORG_CODE ='root'
+	                </when> 
+	                <when test="orgType=='2'.toString()"><!-- 加载本单位节点 -->
+			    		AND ORG_ID = (
+			    		 <![CDATA[
+			    		select &{framework.tmis.table.prefix.bua['platform']}mainUnitID([ORG_ID]) as orgId from &{framework.tmis.table.prefix.bua['platform']}BUA_USER where [USER_ID]=#{userId}
+			    		]]>
+			    		)
+	                </when>
+	                <when test="orgType=='3'.toString()"><!-- 加载本组织机构节点 -->
+			    		AND ORG_ID =(
+			    		<![CDATA[
+			    		select ORG_ID as orgId from &{framework.tmis.table.prefix.bua['platform']}BUA_USER where [USER_ID]=#{userId}
+			    		]]>
+			    		)
+	                </when>
+	                <when test="orgType=='4'.toString()"><!-- 加载根节点 -->
+			    		AND ORG_CODE ='root'
+	                </when> 
+	                <otherwise><!-- 无默认组织 -->
+	                   AND	ORG_ID is null or ORG_ID=''
+	                </otherwise> 
+		          </choose>
+		       </otherwise>
+	        </choose> 
+	  </if>
+	</select>
+	
+	<!-- 根据学校code查询所有用户 -->
+	<select id="selectAllUsersBySchoolCode" parameterType="Map"  resultType="Map">
+		<![CDATA[
+		      select USER_ID,USER_NAME from &{framework.tmis.table.prefix.bua['platform']}BUA_USER 
+		      where ORG_ID=#{schoolCode} AND USER_ID NOT IN (SELECT USER_ID FROM &{framework.tmis.table.prefix.bua['platform']}BUA_USER WHERE USER_ID in (SELECT USER_ID FROM &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER WHERE ROLE_ID=#{roleId}) AND ORG_ID=#{schoolCode});
+		]]>
+	</select>
+	
+	<!-- 查询所有学校 -->
+	<select id="selectAllOrgsRole" parameterType="Map"  resultType="Map">
+		<![CDATA[
+		       select School_Code,School_Name from &{framework.tmis.table.prefix['platform']}tbl_School_Info where 
+		       School_Code NOT IN (SELECT ORG_ID FROM &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_ORG WHERE ROLE_ID=#{roleId})
+		]]>
+	  <if test="school_sequence!=null and school_sequence!=''">
+		 AND School_Type_Sequence = #{school_sequence}
+	  </if>
+	  <if test="school_sequence!=null and school_sequence!='' and schoolCode!=null and schoolCode!=''">
+		 AND School_Type_Sequence = #{school_sequence}
+		 AND School_Code = #{schoolCode}
+	  </if>	  
+	  <if test="school_sequence1!=null and school_sequence1!=''">
+		 AND School_Type_Sequence in('2','3','4')
+		 AND School_Code not in(#{schoolCode})
+	  </if>	
+	</select>
+	
+	<!-- 查询所有组织code -->
+	<select id="selectAllOrgs" parameterType="Map"  resultType="Map">
+		<![CDATA[
+		       select ORG_ID from &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_ORG
+		       where ROLE_ID=#{roleId}
+		]]>
+	</select>
+</mapper>

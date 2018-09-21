@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="teacher">	
+		<!-- 教师查询 -->
+		<!-- select LTRIM(RTRIM(Teacher_Name)) as teaName,* from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info -->
+	<select id="selectPaging" needPaging="true" parameterType="Map" resultType="Map">
+		<![CDATA[
+		            SELECT DISTINCT  LTRIM(RTRIM(Teacher_Name)) as teaName,trts.state,tti.*,tsi.School_Type_Sequence,
+		            tsi.School_Short_Name,trtc.Course_Id,trtcl.Grade_Id
+		            FROM &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info tti
+					INNER JOIN  &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School trts 
+					ON tti.Teacher_Pk=trts.Teacher_Id
+					INNER JOIN  &{framework.tmis.table.prefix['platform']}tbl_School_Info tsi 
+					ON trts.School_Code=tsi.School_Code
+					LEFT JOIN  &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Course trtc 
+					ON trtc.Teacher_Id=tti.Teacher_Pk
+          			LEFT JOIN  &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class trtcl 
+          			ON trtcl.Teacher_Id=tti.Teacher_Pk
+		]]>       
+		<where>
+		and 1=1
+		    <if test="schoolCodeList!=null and schoolCodeList.size>0">
+		       AND trts.School_Code in 
+		     <foreach collection="schoolCodeList" index="index" item="item" open="(" separator="," close=")">
+		         #{item}
+		     </foreach>
+		    </if>
+	    	<if test="loginName!=null and loginName!=''">  
+	           AND (Login_Name like CONCAT('%',#{loginName},'%')
+	       	</if>
+	       	<if test="teacherName!=null and teacherName!=''">  
+	           OR Teacher_Name like CONCAT('%',#{teacherName},'%'))
+	       	</if>
+	       	<if test="schoolType != null and schoolType != ''">  
+	           AND tsi.School_Type_Sequence like CONCAT('%',#{schoolType},'%')
+	       	</if>
+	       	<if test="school != null and school != ''">  
+	           AND tsi.School_Code like CONCAT('%',#{school},'%')
+	       	</if>
+	       	<if test="teacherCourse!=null and teacherCourse!=''">
+	       	   AND trtc.Course_Id=#{teacherCourse}
+	       	   AND trtc.Current_Year=#{currentYear}
+	       	</if>
+	       	<if test="teacherGrade!=null and teacherGrade!=''">
+	       	  AND trtcl.Grade_Id=#{teacherGrade}
+	       	  AND trtcl.Current_Year=#{currentYear}
+	       	</if>
+	   	</where>
+	</select>
+	
+	<!--添加教师{chinesename=qqqqq, username=qq, password=abc123, create_person=包海燕, create_time=2016-09-04 21:55:40, teacher_pk=b79e79c3-9a08-4125-b248-392b4d2e617f}-->
+	<insert id="addTeacher" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info
+			(Id,Teacher_Name,Create_time,Create_Person,Login_Name,Teacher_Pk,password)
+			VALUES(#{id},#{chinesename},#{create_time},#{create_person},#{username},#{teacher_pk},#{passwordMd5})
+	    ]]>
+	</insert>
+	
+	<!-- 根据登录名查询teacher_pk -->
+	<select id="selectTeacherPkByLoginName"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select Teacher_Pk from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info where Login_Name = #{loginName}    
+		]]>       
+	</select>
+	
+	<!-- 查询当前用户的学校code(根据登录名) -->
+	<select id="selectSchoolCodeByLoginName"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select ts.School_Code from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School as ts where Teacher_Id=(select Teacher_Pk from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info where Login_Name = #{loginName})
+		]]>       
+	</select>
+	
+	<!--添加教师学校关系表-->
+	<insert id="addRefTeacherSchool" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School
+			(Id,Teacher_Id,School_Code,state)
+			VALUES(#{id},#{teacher_pk},#{schoolCode},#{state})
+	    ]]>
+	</insert>
+	
+	<!--根据姓名查询外校老师信息-->
+	<select id="selectTeacherByChineseName"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       	select t.Teacher_Name,t.Login_Name,t.Teacher_Pk,s.School_Code,s.School_Name from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info as t
+				left join &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School as ts on t.Teacher_Pk = ts.Teacher_Id
+				left join &{framework.tmis.table.prefix['platform']}tbl_School_Info as s on s.School_Code = ts.School_Code
+				where t.Teacher_Name = #{realname} or t.Login_Name = #{realname}
+		]]>       
+	</select>
+	
+	<!--<delete id="deleteTeacher" parameterType="Map">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School where Teacher_Id in 
+	    ]]>
+	    <foreach collection="selArr" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	   	<![CDATA[
+	   		and School_Code = #{schoolCode}
+	    ]]>
+	</delete>-->
+	<!-- 删除关系表 -->
+	<delete id="deleteTeacher" parameterType="Map">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School where Teacher_Id = #{li} and School_Code = #{schoolCode}
+	    ]]>
+	</delete>
+	<!-- 删除主表 -->
+	<delete id="deleteMainTeacher" parameterType="Map">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info where Teacher_Pk = #{li}
+	    ]]>
+	</delete>
+	
+	<!--查询状态判断是社招还是校招-->
+	<select id="selectState"  parameterType="Map" resultType="String">
+		<![CDATA[
+		      select state from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School where Teacher_Id = #{li} and School_Code = #{schoolCode}
+		]]>       
+	</select>
+	
+	<!-- 根据用户名查询学校类型序列号 -->
+	<select id="selectSchoolTypeByLoginName"  parameterType="String" resultType="String">
+		<![CDATA[
+		       select School_Type_Sequence 
+		       from 
+		          &{framework.tmis.table.prefix['platform']}tbl_School_Info 
+		       where 
+		          School_Code = #{schoolCode}    
+		]]>       
+	</select>
+	
+	<!-- 查询添加的老师是否已经添加 -->
+	<select id="selectTeacherIsExist"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select * from 
+		         &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School 
+		       where 
+		       	 Teacher_Id = #{teacher_pk} and School_Code = #{schoolCode}
+		]]>       
+	</select>
+	
+	<!-- 本校管理员提交调度老师 -->
+	<update id="updateTeacherState" parameterType="Map">
+		<![CDATA[
+			update &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School 
+			set state = '3' , School_New_Adr=#{newadr}
+			where School_Code = #{schoolCode} and Teacher_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</update>
+	
+	<!-- 查询提交的记录中有没有非游离状态的-->
+	<select id="selectIsSubmit"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select state 
+		       from 
+		          &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School 
+		       where 
+		          School_Code = #{schoolCode}  and  Teacher_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>       
+	</select>
+	
+	<!-- 调动前先查询此老师有没有被调走-->
+	<select id="selectIsAlreadyTransfer"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select state from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School where School_Code = #{schoolCode} and Teacher_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>       
+	</select>
+	
+	<!--防止重复申请 -->
+	<select id="selectIsRepeatApply"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		       select state from &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School where School_Code = #{schoolCode} and Teacher_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>       
+	</select>
+	
+	<!-- 撤销调度申请 -->
+	<update id="cancelSubmitApply" parameterType="Map">
+		<![CDATA[
+			update &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_School set state = '0' where School_Code = #{schoolCode} and Teacher_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</update>
+	
+	<!-- 添加申请人和申请时间 -->
+	<update id="addCreatePerson" parameterType="Map">
+		<![CDATA[
+			update &{framework.tmis.table.prefix['platform']}tbl_Teacher_Info set Create_Person = #{create_person},Create_Time = #{create_time} where Teacher_Pk in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</update>
+	
+	<!-- 查询当前教师关联的班级-->
+	<select id="selectClassByTeaPk"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		      select Grade_Id,Class_Id 
+		      from 
+		        &{framework.tmis.table.prefix['platform']}tbl_ref_Teacher_Class 
+		      where 
+		        Teacher_Id = #{id} and Current_Year = #{currentYear}
+		]]>       
+	</select>
+	
+	<!-- 通过school_code查询该学校所有班级和年级 -->
+	<select id="selectAllClassBySchoolCode"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		      select 
+		          Class_Name,Class_No,Class_Pk,Grade_No,Is_Xjb 
+		      from  
+		          &{framework.tmis.table.prefix['platform']}tbl_Class_Info
+		      where 
+		          School_Code = #{schoolCode} 
+		]]> 
+	 	<if test="minClassNo>0 and maxClassNo>0">
+			   AND convert(int,Class_No) &gt;= #{minClassNo}
+			   AND convert(int,Class_No) &lt;= #{maxClassNo}
+		</if>   
+		  order by   Grade_No,Class_No   
+	</select>
+	
+	
+	
+	
+	<!--添加BUA_USER表数据-->
+	<insert id="addBuaUserInfo" parameterType="Map">
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+			(USER_ID,ORG_ID,USER_UID,USER_NAME,USER_EMAIL,USER_PASSWD,CREATE_USER_NAME,CREATE_TIME,USER_EMAIL_PUBLIC)
+			VALUES(#{userId},#{schoolCode},#{username},#{chinesename},'aa123@qq.com','1',#{loginName},#{create_time},'0')
+	    ]]>
+	</insert>
+	
+	<!--添加REF_BUA_USER表数据-->
+	<insert id="addRefBuaUserInfo" parameterType="Map">
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER
+			(ROLE_ID,USER_ID)
+			VALUES(#{roleId},#{userId})
+	    ]]>
+	</insert>
+	
+	<!-- 通过role_code查询role_id-->
+	<select id="selectRoleIdByRoleCode"  parameterType="String" resultType="String">
+		<![CDATA[
+		      select Role_Id from &{framework.tmis.table.prefix.bua['platform']}BUA_ROLE where ROLE_CODE = #{roleCode}
+		]]>       
+	</select>
+	
+	<!-- 删除ref_role_user关系表 -->
+	<delete id="removeRefRoleUser" parameterType="Map">
+		<![CDATA[
+			delete from &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER where User_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</delete>
+	
+	<!-- 删除bua_user表 -->
+	<delete id="removeBuaUser" parameterType="Map">
+		<![CDATA[
+			delete from &{framework.tmis.table.prefix.bua['platform']}BUA_USER where User_Id in
+		]]>
+		<foreach collection="selArr" item="item" close=")" open="(" separator=",">
+				#{item}
+		</foreach>
+	</delete>
+	
+	
+	
+</mapper>

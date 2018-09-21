@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="platformSchool">
+	<!-- 插入
+	4.20(修改) 
+	4.22(增加年级 毕业年份属性)
+	-->
+	
+	<insert id="insert" parameterType="data.platform.entity.PlatformSchool">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}school
+		(id,code,name,parent,teacher,year,Remark,CreateTime,UpdateTime,
+		Operator,teacherAdAccount,pId,grade,raduationYear)
+		VALUES(#{id},#{code},#{name},#{parent},#{teacher},#{year},#{remark},
+		#{createTime},#{updateTime},#{operator},#{teacherAdAccount},#{id},#{grade},#{raduationYear})  
+    ]]>
+	</insert>
+	<!-- 初始化 -->
+	<!-- 4.20(修改)4.22(增加年级 毕业年份属性)-->
+	<insert id="initialize" parameterType="data.platform.entity.PlatformSchool">
+	 <selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}school
+		(id,code,name,parent,teacher,year,Remark,CreateTime,UpdateTime,
+				Operator,teacherAdAccount,pId,grade,raduationYear)
+		VALUES(#{id},#{code},#{name},#{parent},#{teacher},#{year},
+				#{remark},#{createTime},#{updateTime},
+				#{operator},#{teacherAdAccount},#{pId},#{grade},#{raduationYear})  
+    ]]>
+	</insert>
+	
+	
+	
+	<!-- 更新 4.22(增加年级 毕业年份属性) -->
+	<update id="update" parameterType="data.platform.entity.PlatformSchool">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}school
+		set name=#{name},
+		code=#{code},
+		parent=#{parent},
+		teacher=#{teacher},
+		year=#{year},
+		Remark=#{remark},
+		UpdateTime=#{updateTime},
+		Operator=#{operator},
+		teacherAdAccount=#{teacherAdAccount},
+		grade=#{grade},
+		raduationYear=#{raduationYear}
+		 where id = #{id}
+    ]]>
+	</update>
+	
+	<!-- 加载 -->
+	<select id="load" parameterType="java.lang.String" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where id = #{id}
+    ]]>
+	</select>
+	
+	<!-- 根据code获取实体，为了code与name的转换服务 -->
+	<select id="loadBycode" parameterType="Map" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where code = #{code} and year = #{year}
+    ]]>
+	</select>
+	
+	<!-- 根据name获取实体，为了name与code的转换服务 -->
+	<select id="loadByName" parameterType="Map" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where name = #{name} and year = #{year}
+    ]]>
+	</select>
+	
+	<!-- 根据当前year获取新生学院集合 ，为新生管理页面的下拉框级联数据服务 -->
+	<select id="loadXyList" parameterType="String" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where year = #{year} and parent is null
+    ]]>
+    
+	</select>
+	
+	
+	<!-- 根据当前year获取新生学院集合 ，为新生管理页面的下拉框级联数据服务 -->
+	<select id="getZyBjList" parameterType="Map" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where year = #{year} and parent = #{pId}
+    ]]>
+	</select>
+	
+	
+	<!-- 根据是否为空获取学生学院集合 ，
+	为学生管理页面的下拉框级联数据服务 
+	  4.24
+	-->
+	<select id="loadCollegeListList" parameterType="Map" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+          SELECT DISTINCT name FROM  &{framework.tmis.table.prefix['platform']}[school] WHERE parent IS NULL
+    ]]>
+    </select>
+	 
+	 <!-- 根据name获取实体，
+	 为了name与code的转换服务 
+	 4.24
+	 -->
+	<select id="loadBZ" parameterType="Map" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where name = #{name} 
+    ]]>
+	</select>
+	<!-- 根据当前year获取新生学院集合 ，
+	为新生管理页面的下拉框级联数据服务 
+	4.24-->
+	<select id="getZBList" parameterType="Map" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+         select pId,name from &{framework.tmis.table.prefix['platform']}school where parent = #{pId} group by pId,name
+    ]]>
+	</select>
+	
+    
+	
+	
+	
+	<!-- 删除 -->
+	<delete id="delete">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}school where id in 
+    ]]>
+    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+  		#{item}
+   	</foreach>
+	</delete>
+	
+	<!-- 删除 -->
+	<delete id="deleteByYear">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}school where year = #{year}
+    ]]>
+	</delete>
+	
+	<!-- 分页查询 -->
+	<!-- 4.20修改   -->
+	<select id="selectPaging" parameterType="Map" resultType="data.platform.entity.PlatformSchool">
+    <![CDATA[
+            with school_tree as (
+			    select m.*,CONCAT(m.code,'|',cast(m.pId as nvarchar(max))) as serial,dictionaryLevel=1 
+			    from &{framework.tmis.table.prefix['platform']}school m 
+			    	where (m.parent is null or m.parent = '') and  m.year =#{year}
+			    union all
+			    select m.*,CONCAT(t.serial,'|',m.code,'|',m.pId) as serial,
+			    menuLevel=t.dictionaryLevel+1 from &{framework.tmis.table.prefix['platform']}school m,
+			    school_tree t where m.parent = t.pId and t.year =#{year} and m.year =#{year} 
+			)
+    ]]>
+    	select top 100 PERCENT * from school_tree where 1=1
+    	<if test="name!=null and name!=''">  
+           AND name like CONCAT('%',#{name},'%')
+       	</if>
+       	<if test="code!=null and code!=''">  
+           AND code like CONCAT('%',#{code},'%')
+       	</if>
+       	<if test="year!=null and year!=''">  
+           AND year = #{year}
+       	</if>
+       	 <if test="raduationYear!=null and raduationYear!=''">  
+           AND raduationYear =#{raduationYear}
+       	</if>
+        <if test="isBy!=null and isBY!=''">  
+           AND raduationYear is not null AND raduationYear!=''
+       	</if>
+       	
+   	order by serial
+	</select>
+	
+	<!-- 查询树 -->
+	<resultMap id="TreeMap" type="data.framework.data.DataTree">
+		<result property="id" column="id" />
+		<result property="label" column="name" />
+		<result property="dictionaryCode" column="code" />
+		<result property="remark" column="remark" />
+
+		<collection property="children" column="id" ofType="data.framework.data.DataTree" javaType="java.util.ArrayList" select="selectChildDataDictionary">
+			<result property="id" column="id" />
+			<result property="label" column="name" />
+            <result property="dictionaryCode" column="code" />
+            <result property="remark" column="remark" />
+		</collection>
+	</resultMap>
+    
+	<select id="selectTreeDataDictionary" parameterType="Map" resultMap="TreeMap">
+	<![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where parent is null or parent = '' order by code
+    ]]>
+	</select>
+	
+	<select id="selectChildDataDictionary" resultMap="TreeMap">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where parent = #{id} order by code
+    ]]>
+	</select>
+
+    <select id="selectTreeDataDictionaryByParentCode" parameterType="String" resultMap="TreeMap">
+        <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school
+        where parent=(select id from &{framework.tmis.table.prefix['platform']}school where code = #{code})
+        order by code
+        ]]>
+    </select>
+      <select id="selectDictionaryValueByCode" parameterType="String" resultType="data.platform.entity.PlatformSchool">
+        <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}school where code=#{code}
+        ]]>
+    </select>
+    <!--查询所有在校学生  4.23 -->
+	<select id="searchZaiDuBan" parameterType="Map" resultType="data.platform.entity.PlatformSchool">
+		<![CDATA[
+			select * from &{framework.tmis.table.prefix['platform']}school where
+    			 raduationYear is null or raduationYear=''
+        ]]>
+	</select>
+	 <!--添加上学期和下学期校历 -->
+	<insert id="insertSchoolCalendar" parameterType="Map">
+	<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+  		SELECT NewID()
+    </selectKey>  
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+		(Id,Last_Begin_Time,Last_End_Time,Next_Begin_Time,Next_End_Time,Create_Person,Create_Time,School_Year,School_Id,Winter_Begin_Time,Winter_End_Time,Summer_Begin_Time,Summer_End_Time)
+		VALUES(#{id},#{last_beginTime},#{last_endTime},#{next_beginTime},#{next_endTime},#{createPerson},#{createTime},#{schoolYear},null,#{winter_beginTime},#{winter_endTime},#{summer_beginTime},#{summer_endTime})
+    ]]>
+	</insert>
+	
+	 <!--查询最新添加的校历 -->
+	<select id="selectEarlyHoliday"  resultType="data.academic.schoolHoliday.entity.SchoolCalendar">
+		<![CDATA[
+			select  * from &{framework.tmis.table.prefix['platform']}tbl_School_Calendar order by Create_Time desc
+        ]]>
+	</select>
+	<!-- 修改校历 -->
+	<update id="updateSchoolCalendar" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+		set Last_Begin_Time=#{last_beginTime},
+		Last_End_Time=#{last_endTime},
+		Next_Begin_Time=#{next_beginTime},
+		Next_End_Time=#{next_endTime},
+		Update_Person=#{updatePerson},
+		Update_Time=#{updateTime},
+		School_Year=#{schoolYear},
+		Winter_Begin_Time=#{winter_beginTime_update},
+		Winter_End_Time=#{winter_endTime_update},
+		Summer_Begin_Time=#{summer_beginTime_update},
+		Summer_End_Time=#{summer_endTime_update}
+		where id = #{hidden_id}
+    ]]>
+	</update>
+	
+	<!-- 删除校历 -->
+	<delete id="deleteSchoolCalendar" parameterType="Map">
+	    <![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+		where id = #{id}
+    ]]>
+	</delete>
+	
+	<select id="checkBeforeInsert" parameterType="java.lang.String" resultType="data.academic.schoolHoliday.entity.SchoolCalendar">
+		<![CDATA[
+	        select * from &{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+			where School_Year = #{schoolYear}
+	    ]]>
+	</select>
+	<select id="getStartTimeBySchoolYear" parameterType="java.lang.String" resultType="data.academic.schoolHoliday.entity.SchoolCalendar">
+		<![CDATA[
+	        select * from &{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+			where School_Year like CONCAT('%',#{tempYear})
+	    ]]>
+	</select>
+	
+</mapper>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://www.springframework.org/schema/beans" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jaxws="http://cxf.apache.org/jaxws" xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="
+  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+  http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+  http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+  http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.0.xsd
+  http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
+  http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd
+  http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
+  
+
+    <!-- 启动AOP支持 -->
+	<aop:aspectj-autoproxy />
+	<!-- 可通过注解控制事务 -->
+	<tx:annotation-driven />
+	<!-- 开启自动扫包 -->
+	<context:component-scan base-package="data" />
+	<!-- aspectj支持自动代理实现AOP功能 -->
+	<aop:aspectj-autoproxy proxy-target-class="true"/>
+	<!-- <import resource="framework-service-timer.xml"/>  --><!-- 定时器配置文件 -->
+	<!-- 注册multipart解析器，用于图片上传 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" />
+	
+	
+	<!-- 数据源配置，使用 "proxool" 做数据库链接池 -->
+	<bean id="dataSource" class="org.logicalcobwebs.proxool.ProxoolDataSource">
+		<property name="alias" value="平台数据源" />
+		<property name="driver" value="$(framework.data.properties['driver'])" />
+		<property name="driverUrl" value="$(framework.data.properties['driverUrl'])" />
+		<property name="user" value="$(framework.data.properties['user'])" />
+		<property name="password" value="$(framework.data.properties['password'])" />
+		<property name="houseKeepingTestSql" value="$(framework.data.properties['keepSql'])" />
+		<property name="maximumConnectionCount" value="$(framework.data.source['proxool.maximum-connection-count'])" />
+		<property name="minimumConnectionCount" value="$(framework.data.source['proxool.minimum-connection-count'])" />
+		<property name="prototypeCount" value="$(framework.data.source['proxool.prototype-count'])" />
+		<property name="simultaneousBuildThrottle" value="$(framework.data.source['proxool.simultaneous-build-throttle'])" />
+	</bean>
+
+    <!-- 配置事务管理器,由spring管理事务 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- spring框架的Scheduled定时器 -->
+  	<task:annotation-driven/>
+  	<task:scheduled-tasks><!-- 0 0 01 * * ? -->
+    	<task:scheduled ref="updateDateTasks" method="updateDateTask" cron="0 0 01 * * ?"/>
+  	</task:scheduled-tasks>
+  	<bean id="updateDateTasks" class="data.academic.util.updateQpDataTimerTaskUtil"></bean>
+  <!-- spring框架的Scheduled定时器结束 -->
+
+	<!-- MyBatis配置 -->
+	<bean id="dataAuthorityInterceptor" class="data.platform.authority.data.DataAuthorityInterceptor"/>
+    
+	<bean id="paginationInterceptor" class="data.framework.pagination.PaginationInterceptor">
+        <property name="properties">
+            <props>
+                <prop key="dialect">MSSQL</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <!-- 会话工厂bean sqlSessionFactoryBean -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	    <!-- 数据源 -->
+		<property name="dataSource" ref="dataSource" />
+		<!-- 自动扫描entity目录,sql映射文件路径 -->
+		<property name="mapperLocations" value="classpath:resource/mapper/**/*Mapper.xml" />
+		<property name="plugins">
+            <list>
+                <ref bean="dataAuthorityInterceptor"/>
+            </list>
+        </property>
+	</bean>
+	
+	<!-- mybatis spring sqlSessionTemplate,使用时直接让spring注入即可 -->
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate" scope="prototype">
+		<constructor-arg index="0" ref="sqlSessionFactory" />
+	</bean>
+
+	<!-- quartz 计划任务工厂配置 -->
+	<bean id="schedulerQuartzImpl" class="data.framework.schedule.SchedulerQuartzImpl">
+		<constructor-arg>
+			<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean"
+				destroy-method="stop">
+				<property name="dataSource" ref="dataSource" />
+				<property name="startupDelay" value="30" />
+				<property name="overwriteExistingJobs" value="true" />
+				<property name="transactionManager" ref="transactionManager"/>
+				<property name="quartzProperties">
+					<props>
+						<prop key="org.quartz.jobStore.class">org.quartz.impl.jdbcjobstore.JobStoreTX</prop>
+						<prop key="org.quartz.jobStore.tablePrefix">$(framework.tmis.table.prefix['scheduler'])</prop>
+						<prop key="org.quartz.jobStore.driverDelegateClass">org.quartz.impl.jdbcjobstore.MSSQLDelegate</prop>
+						<prop key="org.quartz.threadPool.class">org.quartz.simpl.SimpleThreadPool</prop>
+						<prop key="org.quartz.threadPool.threadCount">5</prop>
+						<prop key="org.quartz.threadPool.threadPriority">5</prop>
+						<prop key="org.quartz.scheduler.skipUpdateCheck">true</prop>
+					</props>
+				</property>
+			</bean>
+		</constructor-arg>
+	</bean>
+	<!-- Freemarker配置 -->  
+	<bean id="freemarkerConfig" class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">
+	    <!-- 模板路径 -->  
+	    <property name="templateLoaderPath" value="/ftl/"/>
+	    <property name="freemarkerSettings">
+	        <props>
+	            <!-- 刷新模板的周期，单位为秒 -->
+	            <prop key="template_update_delay">0</prop>
+	            <!--模板的编码格式 -->
+	            <prop key="default_encoding">UTF-8</prop>
+	            <!--该模板所使用的国际化语言环境选项 -->
+	            <prop key="locale">zh_CN</prop>
+	            <!--数字格式 -->
+	            <prop key="number_format">0.##########</prop>
+	            <!--日期时间格式 -->
+	            <prop key="datetime_format">yyyy-MM-dd HH:mm:ss</prop>
+	            <!--此属性可以防止模板解析空值时的错误 -->  
+	            <prop key="classic_compatible">true</prop>
+	            <prop key="template_exception_handler">ignore</prop>  
+	        </props>
+	    </property> 
+	</bean>
+	<!-- 安全配置 -->
+  	<security:http servlet-api-provision="false" access-decision-manager-ref="accessControlManager" access-denied-page="/pages/common/error_403.jsp">
+    	<security:intercept-url pattern="/theme/**" filters="none" />
+    	<security:intercept-url pattern="/platform/accessory_.do" filters="none" />
+    	<security:intercept-url pattern="/common/choosePerson.do" filters="none" />
+    	<security:intercept-url pattern="/description/descriptionList.do" filters="none" />
+    	<security:intercept-url pattern="/newStudent/**" filters="none" />
+    	<security:intercept-url pattern="/js/**" filters="none" />
+    	<security:intercept-url pattern="/dwr/**" filters="none" />
+    	<security:intercept-url pattern="/upload/**" filters="none" />
+    	<security:intercept-url pattern="/files/**" filters="none" />
+    	<security:intercept-url pattern="/login.jsp" filters="none" />
+        <security:intercept-url pattern="/401.html" filters="none" />
+        <security:intercept-url pattern="/pages/dialog/**" filters="none" />
+    	<security:intercept-url pattern="/pages/dashboard.jsp" filters="none" />
+    	<security:intercept-url pattern="/pages/common/push.jsp" filters="none" />
+    	<security:intercept-url pattern="/**" access="all" />
+    	<security:anonymous enabled="false" />
+    	<security:form-login authentication-failure-handler-ref="authenticationFailureBean" authentication-success-handler-ref="authenticationSuccessBean"/>
+    	<security:logout success-handler-ref="logoutBean" />
+    	<security:custom-filter ref="preauthenticatedFilter" position="PRE_AUTH_FILTER" />
+    	<security:custom-filter ref="captchaFilter" before="FORM_LOGIN_FILTER" />
+    	<security:custom-filter ref="purviewFilter" after="FORM_LOGIN_FILTER" />
+  </security:http>
+  <security:authentication-manager alias="mainManager">
+    	<security:authentication-provider ref="principalAuthenticator" />
+  </security:authentication-manager>
+</beans>

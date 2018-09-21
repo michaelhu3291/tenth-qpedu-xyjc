@@ -1,0 +1,833 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="smallTitle">
+
+	<!-- 导入小题分 -->
+	<insert id="insertSmallTitle"  parameterType="List">
+		<![CDATA[
+		 INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Small_Title_Score
+			(Id,Exam_Number,Name,Question_Number,Score,Create_Time,Create_Person,School_Year,School_Type,Term,Exam_Type,Course,Small_Title_Sort,School_Code,Class_Grade,Class_Name,School_Name,XJH)
+			values 
+	    ]]>
+	    	<foreach collection="list" index="index" item="item" separator="," >
+	       (NewID(),#{item.exam_number},#{item.name},#{item.tihao},#{item.score},#{item.create_time},#{item.create_person},#{item.schoolYear},#{item.schoolType},#{item.term},#{item.examType},#{item.course},#{item.smallTitleSort},#{item.schoolCode},#{item.grade},#{item.className},#{item.schoolName},#{item.xjh})
+	       </foreach>
+	    
+	</insert>
+	
+    <!-- 插入个人考试科目分数 -->
+    <insert id="insertEveryStuEveryCourseTotalScore" parameterType="java.util.List">
+       <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+             (Id,Exam_Number,Name,TotalScore,Create_Time,Create_Person,School_Year,School_Type,Term,Exam_Type,Course,Class_Name,Class_Type,School_Code,Class_Id,Class_Grade,Score_List,School_Name,XJH,Exam_code)
+       ]]>
+             values 
+             <foreach collection="list" index="index" item="item" separator="," >     
+	  		(NewID(),#{item.exam_number},#{item.name},#{item.totalScore},#{item.create_time},#{item.create_person},#{item.schoolYear},#{item.schoolType},#{item.term},#{item.examType},#{item.course},#{item.className},#{item.classType},#{item.schoolCode},#{item.classId},#{item.grade},#{item.smallScoreList},#{item.schoolName},#{item.xjh},#{item.examCode})
+	   </foreach>
+     </insert>
+     
+	<!-- 删除小题分 -->
+	<delete id="deleteSmallTitleScore"  parameterType="List">
+	    <![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_Small_Title_Score where Course = #{course} and Exam_Number in 
+	     ]]>
+	     <foreach collection="examNumList" item="item"  open="(" separator="," close=")">
+		 #{item}
+	     </foreach>
+	</delete>
+	
+	<delete id="deleteTotalScore"  parameterType="List">
+	    <![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse where Course = #{course} and Exam_Number in 
+	     ]]>
+	     <foreach collection="examNumList" item="item"  open="(" separator="," close=")">
+		 #{item}
+	     </foreach>
+	</delete>
+	<!--  select  st.* from &{framework.tmis.table.prefix['platform']}tbl_Small_Title_Score st   ORDER BY Total_Score DESC -->
+	<!-- 分页查询小题分 where School_Year = #{schoolYear} and School_Type = #{schoolType} and Term = #{term} and Exam_Type = #{examType} and Course = #{course}	-->
+	<select id="selectSmallTitlePaging" needPaging="true" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	 		SELECT TOP (100) PERCENT
+			s.Name,
+			s.Exam_Number,
+			s.Course,
+			s.Exam_Type,
+			s.School_Year,
+			s.School_Type,
+			s.Term,
+			SUM(CAST(s.Score AS numeric)) AS Total_Score
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_Small_Title_Score s
+			]]>
+				<where>
+					<if test="schoolYear != null and schoolYear != ''">  
+	          			 AND School_Year = #{schoolYear}
+	       			</if>
+	       			<if test="schoolType != null and schoolType != ''">  
+	           			 AND School_Type =#{schoolType}
+	       			</if>
+	       			<if test="schoolCode != null and schoolCode != ''">  
+	           			 AND School_Code =#{schoolCode}
+	       			</if>
+	       			<if test="term != null and term != ''">  
+	          			 AND Term =#{term}
+	       			</if>
+	       			<if test="examType != null and examType != ''">  
+	           			 AND Exam_Type= #{examType}
+	       			</if>
+	       			<if test="course != null and course != ''">  
+	           			 AND Course =#{course}
+	       			</if>
+	       			<if test="exam_number != null and exam_number != ''">  
+	           			AND (Exam_Number like CONCAT('%',#{exam_number},'%')
+	       			</if>
+	       			<if test="name != null and name != ''">  
+	           			OR Name like CONCAT('%',#{name},'%'))
+	       			</if>
+				</where>
+			<![CDATA[
+			GROUP BY
+			s.Exam_Type,
+			s.School_Year,
+			s.School_Type,
+			s.Term,
+			s.Course,
+			s.Name,
+			s.Exam_Number
+			ORDER BY Total_Score DESC,Exam_Number ASC
+	    ]]>
+	</select>
+	
+	<!-- 分页查询小题分 where School_Year = #{schoolYear} and School_Type = #{schoolType} and Term = #{term} and Exam_Type = #{examType} and Course = #{course}	-->
+	<select id="selectImportSmallTitlePaging"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	 		SELECT TOP (100) PERCENT
+			s.Name,
+			s.Exam_Number,
+			s.Course,
+			s.Exam_Type,
+			s.School_Year,
+			s.School_Type,
+			s.Term,
+			SUM(CAST(s.Score AS numeric)) AS Total_Score
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_Small_Title_Score s
+			]]>
+				<where>
+					<if test="schoolYear != null and schoolYear != ''">  
+	          			 AND School_Year = #{schoolYear}
+	       			</if>
+	       			<if test="schoolType != null and schoolType != ''">  
+	           			 AND School_Type =#{schoolType}
+	       			</if>
+	       			<if test="schoolCode != null and schoolCode != ''">  
+	           			 AND School_Code =#{schoolCode}
+	       			</if>
+	       			<if test="term != null and term != ''">  
+	          			 AND Term =#{term}
+	       			</if>
+	       			<if test="examType != null and examType != ''">  
+	           			 AND Exam_Type= #{examType}
+	       			</if>
+	       			<if test="course != null and course != ''">  
+	           			 AND Course =#{course}
+	       			</if>
+	       			<if test="exam_number != null and exam_number != ''">  
+	           			AND (Exam_Number like CONCAT('%',#{exam_number},'%')
+	       			</if>
+	       			<if test="name != null and name != ''">  
+	           			OR Name like CONCAT('%',#{name},'%'))
+	       			</if>
+				</where>
+			<![CDATA[
+			GROUP BY
+			s.Exam_Type,
+			s.School_Year,
+			s.School_Type,
+			s.Term,
+			s.Course,
+			s.Name,
+			s.Exam_Number
+			ORDER BY Total_Score DESC,Exam_Number ASC
+	    ]]>
+	</select>
+	
+	<!-- 查看明细 -->
+	<select id="selectDetailList"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	 		SELECT  Exam_Number,Name,Score,Term,Exam_Type,Course,Class_Name,XJH,School_Name  FROM  &{framework.tmis.table.prefix['platform']}tbl_Small_Title_Score
+			]]>
+			<where>
+				<if test="schoolYear != null and schoolYear != ''">  
+          			 AND School_Year = #{schoolYear}
+       			</if>
+       			<if test="schoolType != null and schoolType != ''">  
+           			 AND School_Type = #{schoolType}
+       			</if>
+       			<if test="term != null and term != ''">  
+          			 AND Term = #{term}
+       			</if>
+       			<if test="examType != null and examType != ''">  
+           			 AND Exam_Type = #{examType}
+       			</if>
+       			<if test="course != null and course != ''">  
+           			 AND Course = #{course}
+       			</if>
+       			<if test="examNumber != null and examNumber != ''">  
+           			AND Exam_Number = #{examNumber}
+       			</if>
+       			<if test="grade != null and grade != ''">  
+           			AND Class_Grade = #{grade}
+       			</if>
+			</where>
+			<![CDATA[
+				order by Small_Title_Sort asc
+			]]>
+	</select>
+	<!--  [Question_Number,Small_Title_Sort] -->
+	<!-- 查看试卷所有题号 -->
+	<select id="getExamQuestion"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	 		SELECT  DISTINCT tsts.Question_Number,tsts.Small_Title_Sort
+	 		FROM  &{framework.tmis.table.prefix['platform']}tbl_Small_Title_Score tsts
+			]]>
+			<where>
+				School_Year = #{schoolYear}
+				AND School_Type = #{schoolType}
+				AND Term = #{term}
+				AND Exam_Type = #{examType}
+				AND Course = #{course}
+				AND Class_Grade = #{grade}
+			</where>
+				ORDER BY Small_Title_Sort
+	</select>
+	
+	<select id="getOneCourseKSRS"  parameterType="Map" resultType="java.lang.Integer">
+	    <![CDATA[
+	 		SELECT  count(*)
+	 		FROM  &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts
+			]]>
+			<where>
+				School_Year = #{schoolYear}
+				AND School_Type = #{schoolType}
+				AND Term = #{term}
+				AND Exam_Type = #{examType}
+				AND Course = #{tempCourse}
+				AND Class_Grade = #{grade}
+				AND ts.School_Code in
+				<foreach collection="school" item="item"  open="(" separator="," close=")">
+				#{item}
+				</foreach>
+			</where>
+	</select>
+	
+	<select id="getScoreList"  parameterType="Map" resultType="Double">
+	    <![CDATA[
+	 		SELECT  sum(TotalScore)
+	 		FROM  &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts
+			]]>
+			<where>
+				School_Year = #{schoolYear}
+				AND School_Type = #{schoolType}
+				AND Term = #{term}
+				AND Exam_Type = #{examType}
+				AND Class_Grade = #{grade}
+				<choose>
+					<when test="isDistrict != null and isDistrict != ''">
+	  				AND ts.Course in
+	  				<foreach collection="course" item="item"  open="(" separator="," close=")">
+	  				#{item}
+	  				</foreach>
+					</when>
+					<otherwise>
+		      		AND ts.Course = #{targetCourse}
+					</otherwise>
+				</choose>
+				
+				<choose>
+					<when test="isSchoolSegment != null and isSchoolSegment != ''">
+	  				AND ts.School_Code=#{targetSchool}
+					</when>
+					<otherwise>
+		      		AND ts.School_Code  in
+					<foreach collection="school" item="item"  open="(" separator="," close=")">
+					#{item}
+					</foreach>
+					</otherwise>
+				</choose>
+				
+				
+				
+				
+				GROUP BY ts.Exam_Number
+			</where>
+	</select>
+	
+	
+	
+	
+	<select id="getScoreNum"  parameterType="Map" resultType="Double">
+		SELECT
+		DISTINCT num
+		FROM (
+			SELECT
+				SUM(TotalScore) AS num
+				<![CDATA[
+				from &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts
+				]]>
+			WHERE
+				1 = 1
+			AND ts.School_Year = #{schoolYear}
+				AND ts.School_Type = #{schoolType}
+				AND ts.Term = #{term}
+				AND ts.Exam_Type = #{examType}
+				AND ts.Class_Grade = #{grade}
+				<choose>
+					<when test="isDistrict != null and isDistrict != ''">
+	  				AND ts.Course in
+	  				<foreach collection="course" item="item"  open="(" separator="," close=")">
+	  				#{item}
+	  				</foreach>
+				</when>
+				<otherwise>
+	      		AND ts.Course = #{targetCourse}
+				</otherwise>
+				</choose>
+				AND ts.School_Code in
+				<foreach collection="school" item="item"  open="(" separator="," close=")">
+				#{item}
+				</foreach>
+			GROUP BY
+				ts.Exam_Number
+		) m ORDER BY num desc
+	</select>
+	
+	
+	<!-- 查看明细 -->
+	<select id="getScoreDetailList"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	 		SELECT  Score_List,School_Name,XJH,Name,TotalScore,Exam_Number,Class_Name,School_Code ,
+	 				 &{framework.tmis.table.prefix['platform']}GET_NUMBER2(Class_Name) as classNo 
+	 		FROM  &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+			]]>
+			<where>
+				<if test="schoolYear != null and schoolYear != ''">  
+          			 AND School_Year = #{schoolYear}
+       			</if>
+       			<if test="schoolType != null and schoolType != ''">  
+           			 AND School_Type = #{schoolType}
+       			</if>
+       			<if test="term != null and term != ''">  
+          			 AND Term = #{term}
+       			</if>
+       			<if test="examType != null and examType != ''">  
+           			 AND Exam_Type = #{examType}
+       			</if>
+       			<if test="course != null and course != ''">  
+           			 AND Course = #{course}
+       			</if>
+       			<if test="examNumber != null and examNumber != ''">  
+           			AND Exam_Number = #{examNumber}
+       			</if>
+       			<if test="grade != null and grade != ''">  
+           			AND Class_Grade = #{grade}
+       			</if>
+       			<if test="targetschool != null and targetschool != ''">  
+           			AND School_Code = #{targetschool}
+       			</if>
+       			<if test="school != null and school != ''">  
+           			AND School_Code in
+           			<foreach collection="school" item="item"  open="(" separator="," close=")">
+					#{item}
+					</foreach>
+       			</if>
+			</where>
+			<![CDATA[
+				order by School_Code,classNo ASC,TotalScore DESC
+			]]>
+	</select>
+	
+	<select id="getDistrictRateMap"  parameterType="Map" resultType="Map">
+		SELECT
+		(SELECT COUNT(*) from(
+		<![CDATA[
+		SELECT SUM(TotalScore) as num from &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts
+		]]>
+		WHERE 1=1
+			<if test="schoolCode != null and schoolCode != ''">
+			AND ts.School_Code=#{schoolCode}
+			</if>
+			AND ts.School_Year = #{schoolYear}
+			AND ts.School_Type = #{schoolType}
+			AND ts.Term = #{term}
+			AND ts.Exam_Type = #{examType}
+			AND ts.Class_Grade = #{grade}
+			<if test="course != null and course != ''">  
+         		AND ts.Course in
+  				<foreach collection="course" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  			</if>
+		GROUP BY ts.Exam_Number
+		)as people
+		WHERE people.num>#{allLh}
+		)AS ylrs,
+		(SELECT COUNT(*) from(
+		<![CDATA[
+		SELECT SUM(TotalScore) as num from &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts
+		]]>
+		WHERE 1=1
+			<if test="schoolCode != null and schoolCode != ''">
+			AND ts.School_Code=#{schoolCode}
+			</if>
+			AND ts.School_Year = #{schoolYear}
+			AND ts.School_Type = #{schoolType}
+			AND ts.Term = #{term}
+			AND ts.Exam_Type = #{examType}
+			AND ts.Class_Grade = #{grade}
+			<if test="course != null and course != ''">  
+         		AND ts.Course in
+  				<foreach collection="course" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  			</if>
+		GROUP BY ts.Exam_Number
+		)as people
+		WHERE people.num>#{allJg}
+		)AS jgrs,
+		<![CDATA[
+		(SELECT SUM(TotalScore)from &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts
+		]]>
+		WHERE 1=1
+			<if test="schoolCode != null and schoolCode != ''">
+			AND ts.School_Code=#{schoolCode}
+			</if>
+			AND ts.School_Year = #{schoolYear}
+			AND ts.School_Type = #{schoolType}
+			AND ts.Term = #{term}
+			AND ts.Exam_Type = #{examType}
+			AND ts.Class_Grade = #{grade}
+			<if test="course != null and course != ''">  
+         		AND ts.Course in
+  				<foreach collection="course" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  			</if>
+		)AS zf,
+		<![CDATA[
+		(SELECT Count(DISTINCT Exam_Number)from &{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse ts
+		]]>
+		WHERE 1=1
+			<if test="schoolCode != null and schoolCode != ''">
+			AND ts.School_Code=#{schoolCode}
+			</if>
+			AND ts.School_Year = #{schoolYear}
+			AND ts.School_Type = #{schoolType}
+			AND ts.Term = #{term}
+			AND ts.Exam_Type = #{examType}
+			AND ts.Class_Grade = #{grade}
+			<if test="course != null and course != ''">  
+         		AND ts.Course in
+  				<foreach collection="course" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  			</if>
+		)AS zrs
+	</select>
+	
+	<select id="getOneCourseRateList"  parameterType="Map" resultType="Map">
+		SELECT(
+			SELECT
+				COUNT (*)
+			FROM
+				<![CDATA[
+				&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+				
+			WHERE
+				TotalScore >= ]]> #{Yx}
+			
+			AND School_Year = #{schoolYear}
+			AND School_Type = #{schoolType}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{targetCourse}
+			AND Class_Grade = #{grade}
+			<choose>
+				<when test="isDistrict != null and isDistrict != ''">
+				<if test="schoolCodeList.size>0 and schoolCodeList!=null">
+					AND School_Code in
+  					<foreach collection="schoolCodeList" item="item"  open="(" separator="," close=")">
+  					#{item}
+  					</foreach>
+				</if>
+			</when>
+			<otherwise>
+			<if test="schoolCode!=null and schoolCode!=''">
+				AND School_Code = #{schoolCode}
+			</if>
+			</otherwise>
+			</choose>
+		) AS yxrs,
+		(
+			SELECT
+				COUNT (*)
+			FROM
+				<![CDATA[
+				&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+			WHERE
+				TotalScore >= ]]> #{Lh}
+				<![CDATA[
+			AND TotalScore < ]]> #{Yx}
+			
+			AND School_Year = #{schoolYear}
+			AND School_Type = #{schoolType}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{targetCourse}
+			AND Class_Grade = #{grade}
+			<choose>
+				<when test="isDistrict != null and isDistrict != ''">
+				<if test="schoolCodeList.size>0 and schoolCodeList!=null">
+  				AND School_Code in
+  				<foreach collection="schoolCodeList" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  				</if>
+			</when>
+			<otherwise>
+			<if test="schoolCode!=null and schoolCode!=''">
+      		AND School_Code = #{schoolCode}
+      		</if>
+			</otherwise>
+			</choose>
+		) AS lhrs,
+		(
+			SELECT
+				COUNT (*)
+			FROM
+				<![CDATA[
+				&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+				
+			WHERE
+				TotalScore >=]]> #{Lh}
+			
+			AND School_Year = #{schoolYear}
+			AND School_Type = #{schoolType}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{targetCourse}
+			AND Class_Grade = #{grade}
+			<choose>
+				<when test="isDistrict != null and isDistrict != ''">
+				<if test="schoolCodeList.size>0 and schoolCodeList!=null">
+  				AND School_Code in
+  				<foreach collection="schoolCodeList" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  				</if>
+			</when>
+			<otherwise>
+			<if test="schoolCode!=null and schoolCode!=''">
+      		AND School_Code = #{schoolCode}
+      		</if>
+			</otherwise>
+			</choose>
+		) AS ylrs,
+		(
+			SELECT
+				COUNT (*)
+			FROM
+				<![CDATA[
+				&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+				
+			WHERE
+				TotalScore >=]]> #{Jg}
+			<![CDATA[ AND TotalScore < ]]> #{Lh}
+			
+			AND School_Year = #{schoolYear}
+			AND School_Type = #{schoolType}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{targetCourse}
+			AND Class_Grade = #{grade}
+			<choose>
+				<when test="isDistrict != null and isDistrict != ''">
+				<if test="schoolCodeList.size>0 and schoolCodeList!=null">
+  				AND School_Code in
+  				<foreach collection="schoolCodeList" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  				</if>
+			</when>
+			<otherwise>
+			<if test="schoolCode!=null and schoolCode!=''">
+      		AND School_Code = #{schoolCode}
+      		</if>
+			</otherwise>
+			</choose>
+		) AS hgrs,
+		(
+			SELECT
+				COUNT (*)
+			FROM
+				<![CDATA[
+				&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+				
+			WHERE
+				TotalScore >= ]]>#{Jg}
+			AND School_Year = #{schoolYear}
+			AND School_Type = #{schoolType}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{targetCourse}
+			AND Class_Grade = #{grade}
+			<choose>
+				<when test="isDistrict != null and isDistrict != ''">
+				<if test="schoolCodeList.size>0 and schoolCodeList!=null">
+  				AND School_Code in
+  				<foreach collection="schoolCodeList" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  				</if>
+			</when>
+			<otherwise>
+			<if test="schoolCode!=null and schoolCode!=''">
+      		AND School_Code = #{schoolCode}
+      		</if>
+			</otherwise>
+			</choose>
+		) AS jgrs,
+		(
+			SELECT
+				COUNT (*)
+			FROM
+				<![CDATA[
+				&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+				
+			WHERE
+				TotalScore < 20
+			]]>
+			AND School_Year = #{schoolYear}
+			AND School_Type = #{schoolType}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{targetCourse}
+			AND Class_Grade = #{grade}
+			<choose>
+				<when test="isDistrict != null and isDistrict != ''">
+				<if test="schoolCodeList.size>0 and schoolCodeList!=null">
+  				AND School_Code in
+  				<foreach collection="schoolCodeList" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  				</if>
+			</when>
+			<otherwise>
+			<if test="schoolCode!=null and schoolCode!=''">
+      		AND School_Code = #{schoolCode}
+      		</if>
+			</otherwise>
+			</choose>
+		) AS jcrs,
+		(
+			SELECT
+				COUNT (*)
+			FROM
+				<![CDATA[
+				&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+				]]>
+			WHERE
+				School_Year = #{schoolYear}
+			AND School_Type = #{schoolType}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{targetCourse}
+			AND Class_Grade = #{grade}
+			<choose>
+				<when test="isDistrict != null and isDistrict != ''">
+				<if test="schoolCodeList.size>0 and schoolCodeList!=null">
+  				AND School_Code in
+  				<foreach collection="schoolCodeList" item="item"  open="(" separator="," close=")">
+  				#{item}
+  				</foreach>
+  				</if>
+			</when>
+			<otherwise>
+			<if test="schoolCode!=null and schoolCode!=''">
+      		AND School_Code = #{schoolCode}
+      		</if>
+			</otherwise>
+			</choose>
+		) AS skrs,
+		<if test="districtPjf != null and districtPjf != ''">  
+			(
+			SELECT
+				COUNT (*)
+			FROM
+				<![CDATA[
+				&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+				
+			WHERE
+				TotalScore > =
+			]]>
+				#{districtPjf}
+			
+			AND School_Year = #{schoolYear}
+			AND School_Type = #{schoolType}
+			AND Term = #{term}
+			AND Exam_Type = #{examType}
+			AND Course = #{targetCourse}
+			AND Class_Grade = #{grade}
+			AND School_Code = #{schoolCode}
+			)AS cjrs,
+		</if>
+		MAX (TotalScore) AS zgf,
+		MIN (TotalScore) AS zdf,
+		AVG (TotalScore) AS pjf,
+		STDEV(TotalScore) As bzc
+	FROM
+		<![CDATA[
+		&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+		]]>
+	WHERE
+		School_Year = #{schoolYear}
+	AND School_Type = #{schoolType}
+	AND Term = #{term}
+	AND Exam_Type = #{examType}
+	AND Course = #{targetCourse}
+	AND Class_Grade = #{grade}
+	<choose>
+		<when test="isDistrict != null and isDistrict != ''">
+		<if test="schoolCodeList.size>0 and schoolCodeList!=null">
+  			AND School_Code in
+  			<foreach collection="schoolCodeList" item="item"  open="(" separator="," close=")">
+  			#{item}
+  			</foreach>
+  			</if>
+			</when>
+		<otherwise>
+		<if test="schoolCode!=null and schoolCode!=''">
+      		AND School_Code = #{schoolCode}
+      		</if>
+		</otherwise>
+	</choose>
+	</select>
+	<!-- 显示当前学年 -->
+	<select id="getCurrentYear"  parameterType="Map" resultType="Map">
+	    <![CDATA[
+	 		SELECT d.DictionaryName,d.DictionaryCode FROM &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary d
+	 		where d.DictionaryCode = #{currentYear}
+		]]>
+			
+			
+	</select>
+	<!-- 青浦超级管理员角色查询组织code -->
+	<select id="selectOrgCodeByLoginName"  parameterType="String" resultType="String">
+	    <![CDATA[
+	 		select o.ORG_CODE from  &{framework.tmis.table.prefix.bua['platform']}BUA_ORGANIZATION o
+			left join &{framework.tmis.table.prefix.bua['platform']}BUA_USER u
+			on u.ORG_ID = o.ORG_ID
+			where u.USER_UID = #{loginName}
+		]]>
+	</select>
+	
+	<!-- 查询每门考试的总分 优分 良分。。。。 -->
+	<select id="getCourseExaminfoList"  parameterType="Map" resultType="Map">
+		<![CDATA[
+		SELECT  trecc.Course,trecc.Exam_Zf,trecc.Exam_Yx,trecc.Exam_Lh,trecc.Exam_Jg
+		FROM
+			&{framework.tmis.table.prefix['platform']}tbl_Exam_Info tei
+		LEFT JOIN &{framework.tmis.table.prefix['platform']}tbl_ref_Exam_Class_Course trecc
+		]]>
+		ON tei.Exam_Number = trecc.Exam_Code
+		WHERE
+			tei.School_Year = #{schoolYear}
+		AND tei.Term = #{term}
+		AND tei.Exam_Type = #{examType}
+		AND tei.Grade_Code = #{grade}
+		AND trecc.Class_Id is null
+		AND trecc.Course in
+		<foreach collection="course" item="item"  open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+	
+	<select id="getMinNameList"  parameterType="Map" resultType="String">
+		<![CDATA[
+		SELECT
+			Name
+		FROM
+			&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+		]]>
+		WHERE
+			School_Year = #{schoolYear}
+		AND School_Type = #{schoolType}
+		AND Term = #{term}
+		AND Exam_Type = #{examType}
+		AND Course = #{targetCourse}
+		AND Class_Grade = #{grade}
+		AND School_Code = #{targetSchoolCode}
+		AND TotalScore=(
+						SELECT
+						min(TotalScore)
+						FROM
+						<![CDATA[
+							&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+						]]>
+						WHERE
+							School_Year = #{schoolYear}
+						AND School_Type = #{schoolType}
+						AND Term = #{term}
+						AND Exam_Type = #{examType}
+						AND Course = #{targetCourse}
+						AND Class_Grade = #{grade}
+						AND School_Code = #{targetSchoolCode}
+						)
+	</select>
+	
+	
+	<select id="getMaxNameList"  parameterType="Map" resultType="String">
+		<![CDATA[
+		SELECT
+			Name
+		FROM
+			&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+		]]>
+		WHERE
+			School_Year = #{schoolYear}
+		AND School_Type = #{schoolType}
+		AND Term = #{term}
+		AND Exam_Type = #{examType}
+		AND Course = #{targetCourse}
+		AND Class_Grade = #{grade}
+		AND School_Code = #{targetSchoolCode}
+		AND TotalScore=(
+						SELECT
+						MAX(TotalScore)
+						FROM
+						<![CDATA[
+							&{framework.tmis.table.prefix['platform']}tbl_ScoreForEveyStuCourse
+						]]>
+						WHERE
+							School_Year = #{schoolYear}
+						AND School_Type = #{schoolType}
+						AND Term = #{term}
+						AND Exam_Type = #{examType}
+						AND Course = #{targetCourse}
+						AND Class_Grade = #{grade}
+						AND School_Code = #{targetSchoolCode}
+						)
+	</select>
+	<select id="getClassBySchoolCodeAndGrade"  parameterType="Map" resultType="Map">
+	<![CDATA[
+	SELECT tci.Class_Name as className,tci.Class_Pk as classId from &{framework.tmis.table.prefix['platform']}tbl_Class_Info tci
+	where tci.Grade_No=#{grade} and tci.School_Code=#{schoolCode}
+	ORDER BY tci.Class_No
+	]]>	
+	</select>
+</mapper>

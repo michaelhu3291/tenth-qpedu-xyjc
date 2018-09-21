@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="schoolHoliday">	
+
+	<!-- 新增校历 -->
+	<insert id="insertHoliday" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">
+			SELECT NewID()
+		</selectKey>
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}SCHOOL_HOLIDAY
+					(ID, HOLIDAY_NAME, SHORT_NAME, START_TIME, 
+					
+					END_TIME, CREATETIME, CREATEPERSON)
+			VALUES(#{id},#{holidayName},#{shortName},#{startTime},
+			
+					#{endTime},#{createTime},#{createPerson})
+	    ]]>
+	</insert>
+	
+	
+	<!-- 修改校历节假日信息 -->
+	<update id="updateHoliday" parameterType="Map">
+		<![CDATA[
+	        update &{framework.tmis.table.prefix['platform']}SCHOOL_HOLIDAY
+			set HOLIDAY_NAME=#{holidayName},
+				SHORT_NAME=#{shortName},
+				START_TIME=#{startTime},
+				END_TIME=#{endTime},
+				UPDATETIME=#{updateTime},
+				UPDATEPERSON=#{updatePerson}
+			where ID = #{mainId}
+    ]]>
+	</update>
+	
+	<!-- 查询历史校历 -->
+	<select id="searchHoliday"  parameterType="Map" resultType="Map">
+    <![CDATA[
+         SELECT
+			s.ID,
+			s.HOLIDAY_NAME,
+			s.START_TIME,
+			s.END_TIME,
+			h.SHORT_NAME AS SHORT_NAME,
+			'' AS TYPE
+		FROM
+			&{framework.tmis.table.prefix['platform']}SCHOOL_HOLIDAY s
+		LEFT JOIN &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB h ON s.SHORT_NAME = h.ID
+		UNION ALL
+			SELECT
+				Id,
+				'上学期开学' AS HOLIDAY_NAME,
+				CONVERT (
+					VARCHAR (8),
+					Last_Begin_Time,
+					112
+				) AS START_TIME,
+				'' AS END_TIME,
+				'开学' AS SHORT_NAME,
+				'xq' AS TYPE
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_School_Calendar t
+			WHERE
+				School_Id = #{schoolId}
+		UNION ALL
+			SELECT
+				Id,
+				'上学期结束' AS HOLIDAY_NAME,
+				CONVERT (
+					VARCHAR (8),
+					Last_End_Time,
+					112
+				) AS START_TIME,
+				'' AS END_TIME,
+				'结束' AS SHORT_NAME,
+				'xq' AS TYPE
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+			WHERE
+				School_Id = #{schoolId}
+		UNION ALL
+			SELECT
+				Id,
+				'下学期开学' AS HOLIDAY_NAME,
+				CONVERT (
+					VARCHAR (8),
+					Next_Begin_Time,
+					112
+				) AS START_TIME,
+				'' AS END_TIME,
+				'开学' AS SHORT_NAME,
+				'xq' AS TYPE
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_School_Calendar t
+			WHERE
+				School_Id = #{schoolId}
+		UNION ALL
+			SELECT
+				Id,
+				'下学期结束' AS HOLIDAY_NAME,
+				CONVERT (
+					VARCHAR (8),
+					Next_End_Time,
+					112
+				) AS START_TIME,
+				'' AS END_TIME,
+				'结束' AS SHORT_NAME,
+				'xq' AS TYPE
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+			WHERE
+				School_Id = #{schoolId}
+		UNION ALL
+			SELECT
+				Id,
+				'寒假开始' AS HOLIDAY_NAME,
+				CONVERT (
+					VARCHAR (8),
+					Winter_Begin_Time,
+					112
+				) AS START_TIME,
+				'' AS END_TIME,
+				'寒假开始' AS SHORT_NAME,
+				'xq' AS TYPE
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_School_Calendar t
+			WHERE
+				School_Id = #{schoolId}
+		UNION ALL
+			SELECT
+				Id,
+				'寒假结束' AS HOLIDAY_NAME,
+				CONVERT (
+					VARCHAR (8),
+					Winter_End_Time,
+					112
+				) AS START_TIME,
+				'' AS END_TIME,
+				'寒假结束' AS SHORT_NAME,
+				'xq' AS TYPE
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+			WHERE
+				School_Id = #{schoolId}
+		UNION ALL
+			SELECT
+				Id,
+				'暑假开始' AS HOLIDAY_NAME,
+				CONVERT (
+					VARCHAR (8),
+					Summer_Begin_Time,
+					112
+				) AS START_TIME,
+				'' AS END_TIME,
+				'暑假开始' AS SHORT_NAME,
+				'xq' AS TYPE
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_School_Calendar t
+			WHERE
+				School_Id = #{schoolId}
+		UNION ALL
+			SELECT
+				Id,
+				'暑假结束' AS HOLIDAY_NAME,
+				CONVERT (
+					VARCHAR (8),
+					Summer_End_Time,
+					112
+				) AS START_TIME,
+				'' AS END_TIME,
+				'暑假结束' AS SHORT_NAME,
+				'xq' AS TYPE
+			FROM
+				&{framework.tmis.table.prefix['platform']}tbl_School_Calendar
+			WHERE
+				School_Id = #{schoolId}
+    ]]>
+	</select>
+	
+	
+	<!-- 加载单个历史校历 -->
+	<select id="loadHoliday"  parameterType="Map" resultType="Map">
+    <![CDATA[
+        select s.HOLIDAY_NAME,s.START_TIME,s.END_TIME,a.SHORT_NAME as SHORT_NAME,a.DictionaryName,a.HOLI_TYPE,s.SHORT_NAME as SHORT_ID 
+        	from &{framework.tmis.table.prefix['platform']}SCHOOL_HOLIDAY s 
+  			left  join (SELECT h.NAME,h.SHORT_NAME,h.HOLI_TYPE,d.DictionaryName 
+  						from &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB h  
+						left  join &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary  
+						d on h.HOLI_TYPE = d.id) a
+			 on a.NAME = s.HOLIDAY_NAME
+  			where ID=#{ID}
+    ]]>
+	</select>
+	
+	
+	<!--删除校历节假日 2016年5月17日22:25:03 -->
+	<delete id="deleteHoliday" parameterType="java.lang.String">
+	<![CDATA[
+        delete from &{framework.tmis.table.prefix['platform']}SCHOOL_HOLIDAY  where ID=#{id}
+    ]]>
+	</delete>
+	
+	<!-- 加载校历节假日下拉框 HOLIDAY_TAB-->
+	<select id="getHoliType"  parameterType="Map" resultType="Map">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}HOLIDAY_TAB  where HOLI_TYPE = #{typeId}
+    ]]>
+	</select>
+	
+	   <!--根据ParentDictionary加载子节点的数据字典的信息 -->
+	<select id="loadChildDictionary" parameterType="Map" resultType="Map">
+    <![CDATA[
+        select * from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary where ParentDictionary=#{parentDictionary}
+   				order by DictionaryCode asc
+    ]]>
+    </select>
+    
+    <!--通过父节点code查询父节点的id-->
+    <select id="selectParentIdByCode"  parameterType="Map" resultType="Map">
+    <![CDATA[
+        select Id from &{framework.tmis.table.prefix['platform']}tbl_PD_DataDictionary 
+  		where DictionaryCode=#{code}
+    ]]>
+	</select>
+	
+</mapper>

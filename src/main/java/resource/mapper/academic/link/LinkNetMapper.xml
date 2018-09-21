@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+
+<mapper namespace="linkNet">
+ 	 <!--添加链接 -->
+	<insert id="insertLink" parameterType="Map">
+		<selectKey resultType="java.lang.String" keyProperty="id" order="BEFORE">  
+	  		SELECT NewID()
+	    </selectKey>  
+	    <![CDATA[
+	        INSERT INTO &{framework.tmis.table.prefix['platform']}tbl_Link
+			(Id,Name,Url,Code,Create_Person,Create_time)
+			VALUES(#{id},#{link_name},#{link_address},#{selectMenu},#{create_person},#{create_time})
+	    ]]>
+	</insert>
+	
+	<!-- 查 询链接-->
+	<select id="selectLink"  parameterType="Map" resultType="data.academic.link.entity.EntityLinkNet">
+    <![CDATA[
+        select  t.* from &{framework.tmis.table.prefix['platform']}tbl_Link t 
+        where t.Code = #{_thisTitle}
+    ]]>
+	</select>
+	
+	<!-- 链接分页查询 -->
+	<select id="selectLinkPaging" needPaging="true" parameterType="Map" resultType="Map">
+	    <![CDATA[
+	       select  t.* from &{framework.tmis.table.prefix['platform']}tbl_Link t 
+	    ]]>
+	    <where>
+	    	<if test="linkName!=null and linkName!=''">  
+	           AND Name like CONCAT('%',#{linkName},'%')
+	       	</if>
+	   	</where>
+	</select>
+	
+	<!-- 删除链接 -->
+	<delete id="deleteLink">
+		<![CDATA[
+	        delete from &{framework.tmis.table.prefix['platform']}tbl_Link where id in 
+	    ]]>
+	    <foreach collection="idAry" index="index" item="item" open="(" separator="," close=")">     
+	  		#{item}
+	   	</foreach>
+	</delete>
+	
+	<!-- 根据id查询链接-->
+	<select id="selectLinkById"  parameterType="Map" resultType="data.academic.link.entity.EntityLinkNet">
+    <![CDATA[
+        select  t.* from &{framework.tmis.table.prefix['platform']}tbl_Link t 
+        where Id = #{id}
+    ]]>
+	</select>
+	<!-- 修改链接 -->
+	<update id="updateLinkById" parameterType="Map">
+	    <![CDATA[
+        update &{framework.tmis.table.prefix['platform']}tbl_Link
+		set Name=#{link_name},
+		Url=#{link_address},
+		Code=#{selectMenu},
+		Update_Person=#{update_person},
+		Update_Time=#{update_time}
+		where id = #{id}
+    ]]>
+	</update>
+</mapper>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+    <mapper namespace="adminExamNumberManage">
+    
+  <!-- 得到青浦管理员发布的考试下的学校-->
+  	<select id="getSchoolByExamCode"  parameterType="java.lang.String" resultType="Map">
+    <![CDATA[
+      select  *  from &{framework.tmis.table.prefix['platform']}tbl_ref_SubInstructor_Exam 
+      where Exam_Code=#{examCode} 
+      order by Brevity_Code
+    ]]>
+    </select>
+</mapper>

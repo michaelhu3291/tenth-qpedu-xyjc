@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "/WEB-INF/classes/mybatis-3-mapper.dtd">
+<mapper namespace="initDataForBua">
+
+	<!-- 批量插入同步教育单位数据到bua -->
+	<insert id="addUnit" parameterType="java.util.List">
+    <![CDATA[
+        INSERT INTO &{framework.tmis.table.prefix.bua['platform']}BUA_ORGANIZATION
+				(ORG_ID,ORG_NAME,ORG_CODE,ORG_PARENT_ID,UNIT_TYPE,ORG_PATH,CREATE_USER_NAME,CREATE_TIME,IDENTIFIER)
+		VALUES 
+		]]>
+		<foreach collection="list" index="index" item="item" separator=",">   
+  			( #{item.DWH},#{item.DWJC},#{item.DWH},'0C5DE5FB-FD6E-44BD-93A1-CF227A5E32C5','1','本单位>根单位>青浦教育>学校','sys',GETDATE(),'1')
+		</foreach>
+	</insert>
+ <!-- 批量同步教师数据到bua -->
+  <insert id="addTeacher" parameterType="java.util.List">
+          <![CDATA[
+                INSERT INTO &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+				  (USER_ID,ORG_ID,USER_UID,USER_NAME,USER_EMAIL,USER_EMAIL_PUBLIC,
+				   USER_PASSWD,CREATE_USER_NAME,CREATE_TIME,IDENTIFIER)
+		       VALUES 
+		]]>
+		 <foreach collection="list" index="index" item="item" separator=",">
+  			      (#{item.PK},#{item.pkSchool},#{item.loginName},#{item.XM},'xxx@tea.com',
+  			      '0','1','sys',GETDATE(),'1')
+      	</foreach>
+  </insert>
+  <!-- 批量同步学生数据到bua   -->
+  <insert id="addStudent" parameterType="java.util.List">
+    <![CDATA[
+                INSERT INTO &{framework.tmis.table.prefix.bua['platform']}BUA_USER
+				  (USER_ID,ORG_ID,USER_UID,USER_NAME,USER_EMAIL,USER_EMAIL_PUBLIC,
+				   USER_PASSWD,CREATE_USER_NAME,CREATE_TIME,IDENTIFIER)
+		       VALUES 
+		]]>
+		 <foreach collection="list" index="index" item="item" separator=",">
+  			      (#{item.PK},#{item.XXPK},#{item.SFZJH},#{item.XM},'xxx@stu.com',
+  			      '0','1','sys',GETDATE(),#{item.identifier})
+      	</foreach>
+  </insert>
+  <!-- 同步用户接口时绑定用户角色《学生和教师》 -->
+   <insert id="addUserRole" parameterType="java.util.List">
+          <![CDATA[
+                INSERT INTO &{framework.tmis.table.prefix.bua['platform']}BUA_REF_ROLE_USER
+				  (ROLE_ID,USER_ID,IDENTIFIER)
+		       VALUES 
+		]]>
+		 <foreach collection="list" index="index" item="item" separator=",">
+  			      (#{item.roleId},#{item.PK},#{item.identifier})
+     	  </foreach>
+  </insert>
+  <!-- 同步数据时删除bua里面所有相关用户，机构信息 -->
+   <delete id="removeUsersAndOrgs">
+    <![CDATA[
+     	 DELETE
+		 FROM
+			&{framework.tmis.table.prefix.bua['platform']} BUA_REF_ROLE_USER
+		 WHERE
+			USER_ID IN (
+				SELECT
+					USER_ID
+				FROM
+					&{framework.tmis.table.prefix.bua['platform']} BUA_USER
+				WHERE
+					ORG_ID IN (
+						SELECT
+							ORG_ID
+						FROM
+							&{framework.tmis.table.prefix.bua['platform']}BUA_ORGANIZATION
+						WHERE
+							IDENTIFIER = '1'
+				)
+		)
+    ]]>
+    <![CDATA[
+    	DELETE
+		FROM
+			&{framework.tmis.table.prefix.bua['platform']} BUA_USER
+		WHERE
+			ORG_ID IN (
+				SELECT
+					ORG_ID
+				FROM
+					&{framework.tmis.table.prefix.bua['platform']}BUA_ORGANIZATION
+				WHERE
+					IDENTIFIER = '1'
+			)
+    ]]>
+    <![CDATA[
+      DELETE
+		FROM
+			&{framework.tmis.table.prefix.bua['platform']} BUA_REF_ROLE_ORG
+		WHERE
+			ORG_ID IN (
+				SELECT
+					ORG_ID
+				FROM
+					&{framework.tmis.table.prefix.bua['platform']}BUA_ORGANIZATION
+				WHERE
+					IDENTIFIER = '1'
+			)
+    ]]>
+    <![CDATA[
+   		  DELETE
+				FROM
+					&{framework.tmis.table.prefix.bua['platform']}BUA_ORGANIZATION
+				WHERE
+					IDENTIFIER ='1'
+    ]]>
+   </delete>
+   
+   
+   <!--删除bua中学生或者教师数据  -->
+    <delete id="removeUserForBua" parameterType="java.lang.String">
+    <![CDATA[
+     	 DELETE
+		 FROM
+			&{framework.tmis.table.prefix.bua['platform']} BUA_REF_ROLE_USER
+		 WHERE
+			USER_ID IN (
+				SELECT
+					USER_ID
+				FROM
+					&{framework.tmis.table.prefix.bua['platform']} BUA_USER
+				WHERE IDENTIFIER=#{identifier}
+		)
+    ]]>
+    <![CDATA[
+    	DELETE
+		FROM
+			&{framework.tmis.table.prefix.bua['platform']} BUA_USER
+		WHERE IDENTIFIER = #{identifier}
+    ]]>
+   </delete>
+
+</mapper>
