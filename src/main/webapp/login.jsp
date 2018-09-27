@@ -8,7 +8,6 @@ data.framework.utility.EncryptHelper" contentType="text/html; charset=UTF-8"
 <head>
 <link rel="shortcut icon" href="theme/default/icon/favicon.ico" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<!-- <link href="theme/default/login.css" rel="stylesheet" type="text/css" /> -->
 <link href="theme/default/master.css" rel="stylesheet" type="text/css" >
 
 <script type="text/javascript" src="js/jquery.js"></script>
@@ -64,7 +63,6 @@ if(c!=null){
 						 <span class="l_ipt02"><input type="password"  value="请输入密码" class="textinp" placeholder="口令" id="j_password" name="j_password"></span>
 						</td>
 					</tr>
-				
 				</table>
 			</div>
 			 <span class="l_btn"><a  onclick='$("#login_form").trigger("submit");'>登录</a></span>
